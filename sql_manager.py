@@ -63,36 +63,42 @@ class SQLManager:
         )
 
     def add_sale(self, amount, type):
-        # Convert the string input to a Decimal object
-        amount_decimal = SQLManager.to_decimal(amount)
-
-        # Calculate commissions using Decimal for precision
-        sale_commission = SQLManager.calculate_sale_commission_decimal(amount_decimal)
-        presentation_commission = SQLManager.calculate_presentation_commission_decimal(
-            amount_decimal
-        )
-        if type == "sale":
-            insert_statement = (
-                """INSERT INTO sales(amount, commission, type) VALUES (?, ?, ?);"""
-            )
-            data = (amount_decimal, sale_commission, type)
-        elif type == "presentation":
-            insert_statement = (
-                """INSERT INTO sales(amount, commission, type) VALUES (?, ?, ?);"""
-            )
-            data = (amount_decimal, presentation_commission, type)
-        else:
-            print("Provide valid data.")
-
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                cursor.execute(insert_statement, data)
-                conn.commit()
-        except sqlite3.Error as e:
-            print(f"Error adding sale: {e}")
+            int_check = int(amount)
+        except ValueError:
+            print("Enter valid number")
         else:
-            print("Sale added!")
+            if int_check > 0:
+
+                # Convert the string input to a Decimal object
+                amount_decimal = SQLManager.to_decimal(amount)
+                # Calculate commissions using Decimal for precision
+                sale_commission = SQLManager.calculate_sale_commission_decimal(
+                    amount_decimal
+                )
+                presentation_commission = (
+                    SQLManager.calculate_presentation_commission_decimal(amount_decimal)
+                )
+                if type == "sale":
+                    insert_statement = """INSERT INTO sales(amount, commission, type) VALUES (?, ?, ?);"""
+                    data = (amount_decimal, sale_commission, type)
+                elif type == "presentation":
+                    insert_statement = """INSERT INTO sales(amount, commission, type) VALUES (?, ?, ?);"""
+                    data = (amount_decimal, presentation_commission, type)
+                else:
+                    print("Provide valid data.")
+
+                try:
+                    with sqlite3.connect(self.db_path) as conn:
+                        cursor = conn.cursor()
+                        cursor.execute(insert_statement, data)
+                        conn.commit()
+                except sqlite3.Error as e:
+                    print(f"Error adding sale: {e}")
+                else:
+                    print("Sale added!")
+            else:
+                print("Inter a positive integer")
 
     def update_sale(self, id, amount, type=None):
         try:
