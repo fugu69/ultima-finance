@@ -164,13 +164,15 @@ class SQLManager:
                     else:
                         print("Invalid type!")
                         return
-                    
+
                 if type is not None:
                     if amount is not None:
                         amount_decimal = SQLManager.to_decimal(amount)
                         if type == "sale":
-                            sale_commission = SQLManager.calculate_sale_commission_decimal(
-                                amount_decimal
+                            sale_commission = (
+                                SQLManager.calculate_sale_commission_decimal(
+                                    amount_decimal
+                                )
                             )
                             updates.append("amount=?")
                             updates.append("type=?")
@@ -196,14 +198,20 @@ class SQLManager:
                             print("Invalid type!")
                             return
                     elif amount is None:
-                        stored_amount = cursor.execute("""SELECT amount FROM sales WHERE id=?""", (id,)).fetchone()
+                        stored_amount = cursor.execute(
+                            """SELECT amount FROM sales WHERE id=?""", (id,)
+                        ).fetchone()
 
                         if stored_amount[0]:
                             print("Amount found")
-                            stored_amount_decimal = SQLManager.to_decimal(stored_amount[0])
+                            stored_amount_decimal = SQLManager.to_decimal(
+                                stored_amount[0]
+                            )
                             if type == "sale":
-                                sale_commission = SQLManager.calculate_sale_commission_decimal(
-                                    stored_amount_decimal
+                                sale_commission = (
+                                    SQLManager.calculate_sale_commission_decimal(
+                                        stored_amount_decimal
+                                    )
                                 )
                                 updates.append("type=?")
                                 updates.append("commission=?")
@@ -211,10 +219,8 @@ class SQLManager:
                                 values.append(sale_commission)
                                 print("sale type found")
                             elif type == "presentation":
-                                presentation_commission = (
-                                    SQLManager.calculate_presentation_commission_decimal(
-                                        stored_amount_decimal
-                                    )
+                                presentation_commission = SQLManager.calculate_presentation_commission_decimal(
+                                    stored_amount_decimal
                                 )
                                 updates.append("type=?")
                                 updates.append("commission=?")
@@ -225,9 +231,10 @@ class SQLManager:
                                 print("Invalid type!")
                                 return
 
-                
                 values.append(id)
-                cursor.execute(f"""UPDATE sales SET {', '.join(updates)} WHERE id=?""", values)
+                cursor.execute(
+                    f"""UPDATE sales SET {', '.join(updates)} WHERE id=?""", values
+                )
                 conn.commit()
         except sqlite3.OperationalError as e:
             print(f"Failed to update: {e}")

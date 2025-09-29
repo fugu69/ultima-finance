@@ -1,7 +1,6 @@
 from sql_manager import SQLManager
 
 
-
 class SalesManager:
     def __init__(self):
         self.db = SQLManager()
@@ -66,11 +65,3 @@ while True:
         app.delete_sale(id)
     else:
         print("Invalid input")
-
-# TO-DO:
-# 1. Replace id with sale_id
-# 2. Move menu into function and run if __main__
-# 3. Convert data types in inputs and catch errors earlier
-# 4. Ensure that float is used for amounts
-# 5. Load data in memory and write when needed
-# 5. _get_sale_by_id() to DRY
