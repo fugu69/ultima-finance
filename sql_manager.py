@@ -100,45 +100,134 @@ class SQLManager:
             else:
                 print("Inter a positive integer")
 
-    def update_sale(self, id, amount, type=None):
+    def update_sale(self, id, date=None, amount=None, type=None):
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
-                update_statement = (
-                    """UPDATE sales SET amount=?, commission=?, type=? WHERE id = ?;"""
-                )
-                amount_decimal = SQLManager.to_decimal(amount)
-                sale_commission = SQLManager.calculate_sale_commission_decimal(
-                    amount_decimal
-                )
-                presentation_commission = (
-                    SQLManager.calculate_presentation_commission_decimal(amount_decimal)
-                )
+                updates = []
+                values = []
 
-                if type is None:
-                    # .execute returns pointer to the data (cursor points to data)
-                    # .fetchone() returns found data in the convinient container (tuple)
-                    stored_type = cursor.execute(
-                        """SELECT type FROM sales WHERE id = ?""", (id,)
-                    ).fetchone()
-                    print("data found")
-                    # check the value of the tuple(type,)
-                    if stored_type[0] == "sale":
-                        data = (amount, sale_commission, stored_type[0], id)
+                if date is not None:
+                    updates.append("date=?")
+                    values.append(date)
+
+                if amount is not None:
+
+                    amount_decimal = SQLManager.to_decimal(amount)
+
+                    if type is None:
+                        # .execute returns pointer to the data (cursor points to data)
+                        # .fetchone() returns found data in the convinient container (tuple)
+                        stored_type = cursor.execute(
+                            """SELECT type FROM sales WHERE id = ?""", (id,)
+                        ).fetchone()
+                        print("data found")
+                        # check the value of the tuple(type,)
+                        if stored_type[0] == "sale":
+                            sale_commission = (
+                                SQLManager.calculate_sale_commission_decimal(
+                                    amount_decimal
+                                )
+                            )
+                            updates.append("commission=?")
+                            values.append(sale_commission)
+                            print("sale type found")
+                        elif stored_type[0] == "presentation":
+                            presentation_commission = (
+                                SQLManager.calculate_presentation_commission_decimal(
+                                    amount_decimal
+                                )
+                            )
+                            updates.append("commission=?")
+                            values.append(presentation_commission)
+                            print("presentation type found")
+                        else:
+                            print("No type found")
+                            return
+                    elif type == "sale":
+                        sale_commission = SQLManager.calculate_sale_commission_decimal(
+                            amount_decimal
+                        )
+                        updates.append("commission=?")
+                        values.append(sale_commission)
                         print("sale type found")
-                    elif stored_type[0] == "presentation":
-                        data = (amount, presentation_commission, stored_type[0], id)
+                    elif type == "presentation":
+                        presentation_commission = (
+                            SQLManager.calculate_presentation_commission_decimal(
+                                amount_decimal
+                            )
+                        )
+                        updates.append("commission=?")
+                        values.append(presentation_commission)
                         print("presentation type found")
                     else:
-                        print("No type found")
+                        print("Invalid type!")
                         return
-                elif type == "sale":
-                    data = (amount, sale_commission, type, id)
-                elif type == "presentation":
-                    data = (amount, presentation_commission, type, id)
+                    
+                if type is not None:
+                    if amount is not None:
+                        amount_decimal = SQLManager.to_decimal(amount)
+                        if type == "sale":
+                            sale_commission = SQLManager.calculate_sale_commission_decimal(
+                                amount_decimal
+                            )
+                            updates.append("amount=?")
+                            updates.append("type=?")
+                            updates.append("commission=?")
+                            values.append(amount)
+                            values.append(type)
+                            values.append(sale_commission)
+                            print("sale type found")
+                        elif type == "presentation":
+                            presentation_commission = (
+                                SQLManager.calculate_presentation_commission_decimal(
+                                    amount_decimal
+                                )
+                            )
+                            updates.append("amount=?")
+                            updates.append("type=?")
+                            updates.append("commission=?")
+                            values.append(amount)
+                            values.append(type)
+                            values.append(presentation_commission)
+                            print("presentation type found")
+                        else:
+                            print("Invalid type!")
+                            return
+                    elif amount is None:
+                        stored_amount = cursor.execute("""SELECT amount FROM sales WHERE id=?""", (id,)).fetchone()
 
-                cursor.execute(update_statement, data)
+                        if stored_amount[0]:
+                            print("Amount found")
+                            stored_amount_decimal = SQLManager.to_decimal(stored_amount[0])
+                            if type == "sale":
+                                sale_commission = SQLManager.calculate_sale_commission_decimal(
+                                    stored_amount_decimal
+                                )
+                                updates.append("type=?")
+                                updates.append("commission=?")
+                                values.append(type)
+                                values.append(sale_commission)
+                                print("sale type found")
+                            elif type == "presentation":
+                                presentation_commission = (
+                                    SQLManager.calculate_presentation_commission_decimal(
+                                        stored_amount_decimal
+                                    )
+                                )
+                                updates.append("type=?")
+                                updates.append("commission=?")
+                                values.append(type)
+                                values.append(presentation_commission)
+                                print("presentation type found")
+                            else:
+                                print("Invalid type!")
+                                return
+
+                
+                values.append(id)
+                cursor.execute(f"""UPDATE sales SET {', '.join(updates)} WHERE id=?""", values)
                 conn.commit()
         except sqlite3.OperationalError as e:
             print(f"Failed to update: {e}")

@@ -12,8 +12,8 @@ class SalesManager:
     def add_presentation(self, amount, type="presentation"):
         self.db.add_sale(amount, type)
 
-    def edit_record(self, id, new_amount, type=None):
-        self.db.update_sale(id, new_amount, type)
+    def edit_record(self, id, new_date=None, new_amount=None, new_type=None):
+        self.db.update_sale(id, new_date, new_amount, new_type)
 
     def delete_sale(self, id):
         self.db.delete_sale(id)
@@ -57,8 +57,10 @@ while True:
         add_new_presentation()
     elif choice == "3":
         id = int(input("Enter a valid id: "))
-        new_amount = float(input("Enter a new value: "))
-        app.edit_record(id, new_amount)
+        new_date = input("Enter a new date (YYYY-MM-DD) or ENTER to skip")
+        new_amount = input("Enter a new value or ENTER to skip: ")
+        new_type = input("Enter a new type or ENTER to skip")
+        app.edit_record(id, new_date or None, new_amount or None, new_type or None)
     elif choice == "4":
         id = input("Enter a valid id: ")
         app.delete_sale(id)
