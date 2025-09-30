@@ -51,18 +51,21 @@ class SQLManager:
         return Decimal(str(amount))
 
     @staticmethod
-    def calculate_sale_commission_decimal(amount_decimal):
-        return (amount_decimal * Decimal("0.02")).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+    def calculate_commission_decimal(amount_decimal, sale_type):
+        if sale_type == "sale":
+            return (amount_decimal * Decimal("0.02")).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        elif sale_type == "presentation":
+            return (amount_decimal * Decimal("0.03")).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        else:
+            raise ValueError(
+                f"Invalid type '{sale_type}'. Cannot calculate commission."
+            )
 
-    @staticmethod
-    def calculate_presentation_commission_decimal(amount_decimal):
-        return (amount_decimal * Decimal("0.03")).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
-
-    def add_sale(self, amount, type):
+    def add_sale(self, amount, sale_type):
         try:
             int_check = int(amount)
         except ValueError:
@@ -73,18 +76,18 @@ class SQLManager:
                 # Convert the string input to a Decimal object
                 amount_decimal = SQLManager.to_decimal(amount)
                 # Calculate commissions using Decimal for precision
-                sale_commission = SQLManager.calculate_sale_commission_decimal(
-                    amount_decimal
+                sale_commission = SQLManager.calculate_commission_decimal(
+                    amount_decimal, sale_type
                 )
-                presentation_commission = (
-                    SQLManager.calculate_presentation_commission_decimal(amount_decimal)
+                presentation_commission = SQLManager.calculate_commission_decimal(
+                    amount_decimal, sale_type
                 )
-                if type == "sale":
+                if sale_type == "sale":
                     insert_statement = """INSERT INTO sales(amount, commission, type) VALUES (?, ?, ?);"""
-                    data = (amount_decimal, sale_commission, type)
-                elif type == "presentation":
+                    data = (amount_decimal, sale_commission, sale_type)
+                elif sale_type == "presentation":
                     insert_statement = """INSERT INTO sales(amount, commission, type) VALUES (?, ?, ?);"""
-                    data = (amount_decimal, presentation_commission, type)
+                    data = (amount_decimal, presentation_commission, sale_type)
                 else:
                     print("Provide valid data.")
 
@@ -100,7 +103,7 @@ class SQLManager:
             else:
                 print("Inter a positive integer")
 
-    def update_sale(self, id, date=None, amount=None, type=None):
+    def update_sale(self, id, date=None, amount=None, sale_type=None):
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -112,124 +115,32 @@ class SQLManager:
                     updates.append("date=?")
                     values.append(date)
 
-                if amount is not None:
+                if amount is not None or sale_type is not None:
+                    stored_values = cursor.execute(
+                        """SELECT amount, type FROM sales WHERE id=?""", (id,)
+                    ).fetchone()
 
-                    amount_decimal = SQLManager.to_decimal(amount)
-
-                    if type is None:
-                        # .execute returns pointer to the data (cursor points to data)
-                        # .fetchone() returns found data in the convinient container (tuple)
-                        stored_type = cursor.execute(
-                            """SELECT type FROM sales WHERE id = ?""", (id,)
-                        ).fetchone()
-                        print("data found")
-                        # check the value of the tuple(type,)
-                        if stored_type[0] == "sale":
-                            sale_commission = (
-                                SQLManager.calculate_sale_commission_decimal(
-                                    amount_decimal
-                                )
-                            )
-                            updates.append("commission=?")
-                            values.append(sale_commission)
-                            print("sale type found")
-                        elif stored_type[0] == "presentation":
-                            presentation_commission = (
-                                SQLManager.calculate_presentation_commission_decimal(
-                                    amount_decimal
-                                )
-                            )
-                            updates.append("commission=?")
-                            values.append(presentation_commission)
-                            print("presentation type found")
-                        else:
-                            print("No type found")
-                            return
-                    elif type == "sale":
-                        sale_commission = SQLManager.calculate_sale_commission_decimal(
-                            amount_decimal
-                        )
-                        updates.append("commission=?")
-                        values.append(sale_commission)
-                        print("sale type found")
-                    elif type == "presentation":
-                        presentation_commission = (
-                            SQLManager.calculate_presentation_commission_decimal(
-                                amount_decimal
-                            )
-                        )
-                        updates.append("commission=?")
-                        values.append(presentation_commission)
-                        print("presentation type found")
+                    if stored_values:
+                        stored_amount, stored_sale_type = stored_values
                     else:
-                        print("Invalid type!")
+                        print("No entry found")
                         return
 
-                if type is not None:
-                    if amount is not None:
-                        amount_decimal = SQLManager.to_decimal(amount)
-                        if type == "sale":
-                            sale_commission = (
-                                SQLManager.calculate_sale_commission_decimal(
-                                    amount_decimal
-                                )
-                            )
-                            updates.append("amount=?")
-                            updates.append("type=?")
-                            updates.append("commission=?")
-                            values.append(amount)
-                            values.append(type)
-                            values.append(sale_commission)
-                            print("sale type found")
-                        elif type == "presentation":
-                            presentation_commission = (
-                                SQLManager.calculate_presentation_commission_decimal(
-                                    amount_decimal
-                                )
-                            )
-                            updates.append("amount=?")
-                            updates.append("type=?")
-                            updates.append("commission=?")
-                            values.append(amount)
-                            values.append(type)
-                            values.append(presentation_commission)
-                            print("presentation type found")
-                        else:
-                            print("Invalid type!")
-                            return
-                    elif amount is None:
-                        stored_amount = cursor.execute(
-                            """SELECT amount FROM sales WHERE id=?""", (id,)
-                        ).fetchone()
+                    new_amount = amount if amount is not None else stored_amount
+                    new_amount_decimal = SQLManager.to_decimal(new_amount)
+                    new_sale_type = (
+                        sale_type if sale_type is not None else stored_sale_type
+                    )
+                    new_commission = SQLManager.calculate_commission_decimal(
+                        new_amount_decimal, new_sale_type
+                    )
 
-                        if stored_amount[0]:
-                            print("Amount found")
-                            stored_amount_decimal = SQLManager.to_decimal(
-                                stored_amount[0]
-                            )
-                            if type == "sale":
-                                sale_commission = (
-                                    SQLManager.calculate_sale_commission_decimal(
-                                        stored_amount_decimal
-                                    )
-                                )
-                                updates.append("type=?")
-                                updates.append("commission=?")
-                                values.append(type)
-                                values.append(sale_commission)
-                                print("sale type found")
-                            elif type == "presentation":
-                                presentation_commission = SQLManager.calculate_presentation_commission_decimal(
-                                    stored_amount_decimal
-                                )
-                                updates.append("type=?")
-                                updates.append("commission=?")
-                                values.append(type)
-                                values.append(presentation_commission)
-                                print("presentation type found")
-                            else:
-                                print("Invalid type!")
-                                return
+                    updates.extend(["amount=?", "type=?", "commission=?"])
+                    values.extend([new_amount, new_sale_type, new_commission])
+
+                if not updates:
+                    print("Nothing to commit")
+                    return
 
                 values.append(id)
                 cursor.execute(
