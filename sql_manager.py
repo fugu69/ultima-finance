@@ -1,5 +1,6 @@
 import sqlite3
 import decimal
+from datetime import datetime
 from tabulate import tabulate
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
@@ -17,7 +18,7 @@ decimal.getcontext().prec = 28
 
 class SQLManager:
 
-    def __init__(self, db_path="sales_october.db"):
+    def __init__(self, db_path="sales.db"):
         self.db_path = db_path
         self._init_db()
 
@@ -176,6 +177,84 @@ class SQLManager:
                         table_data, headers=headers, tablefmt="grid", floatfmt=".2f"
                     )
                 )
+        except FileNotFoundError:
+            print("No records yet")
+
+        except sqlite3.Error as e:
+            print(f"Error fetching data: {e}")
+
+    def fetch_current_month_sales(self):
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+
+                # Get current year-month string, e.g. "2025-09"
+                current_month = datetime.now().strftime("%Y-%m")
+
+                rows = cursor.execute(
+                    """SELECT * FROM sales WHERE date LIKE ?""", (f"{current_month}%",)
+                ).fetchall()
+
+                headers = ["id", "Date", "Amount", "Type", "Commission"]
+                total_sales = sum(Decimal(row[2]) for row in rows)
+                total_commission = sum(Decimal(row[4]) for row in rows)
+
+                table_data = rows.copy()
+
+                table_data.append(
+                    (
+                        "TOTAL",
+                        "",
+                        str(total_sales),
+                        "",
+                        str(total_commission),
+                    )
+                )
+
+                print(
+                    tabulate(
+                        table_data, headers=headers, tablefmt="grid", floatfmt=".2f"
+                    )
+                )
+
+        except FileNotFoundError:
+            print("No records yet")
+
+        except sqlite3.Error as e:
+            print(f"Error fetching data: {e}")
+
+    def fetch_data_for_period(self, start_date, end_date):
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+
+                rows = cursor.execute(
+                    """SELECT * FROM sales WHERE date BETWEEN ? AND ?""",
+                    (start_date, end_date),
+                ).fetchall()
+
+                headers = ["id", "Date", "Amount", "Type", "Commission"]
+                total_sales = sum(Decimal(row[2]) for row in rows)
+                total_commission = sum(Decimal(row[4]) for row in rows)
+
+                table_data = rows.copy()
+
+                table_data.append(
+                    (
+                        "TOTAL",
+                        "",
+                        str(total_sales),
+                        "",
+                        str(total_commission),
+                    )
+                )
+
+                print(
+                    tabulate(
+                        table_data, headers=headers, tablefmt="grid", floatfmt=".2f"
+                    )
+                )
+
         except FileNotFoundError:
             print("No records yet")
 

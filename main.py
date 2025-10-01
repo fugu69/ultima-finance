@@ -18,7 +18,10 @@ class SalesManager:
         self.db.delete_sale(id)
 
     def display_table(self):
-        self.db.fetch_all_sales()
+        self.db.fetch_current_month_sales()
+
+    def display_sales_for_period(self, start_date, end_date):
+        self.db.fetch_data_for_period(start_date, end_date)
 
 
 app = SalesManager()
@@ -32,6 +35,7 @@ def display_menu():
     print("2. Add new presentation.")
     print("3. Edit record.")
     print("4. Delete record.")
+    print("5. Select sales for a period.")
 
 
 def add_new_sale():
@@ -63,5 +67,9 @@ while True:
     elif choice == "4":
         id = input("Enter a valid id: ")
         app.delete_sale(id)
+    elif choice == "5":
+        start_date = input("Enter a start date (YYYY-MM-DD): ")
+        end_date = input("Enter an end date (YYYY-MM-DD): ")
+        app.display_sales_for_period(start_date, end_date)
     else:
         print("Invalid input")
