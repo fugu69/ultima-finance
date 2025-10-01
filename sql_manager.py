@@ -1,7 +1,7 @@
 import sqlite3
 import decimal
 from tabulate import tabulate
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 
 # Add this code at the top of your script, with your other imports.
@@ -17,7 +17,7 @@ decimal.getcontext().prec = 28
 
 class SQLManager:
 
-    def __init__(self, db_path="sales.db"):
+    def __init__(self, db_path="sales_october.db"):
         self.db_path = db_path
         self._init_db()
 
@@ -67,34 +67,33 @@ class SQLManager:
 
     def add_sale(self, amount, sale_type):
         try:
-            int_check = int(amount)
-        except ValueError:
+            amount_decimal = SQLManager.to_decimal(amount)
+        except InvalidOperation:
             print("Enter valid number")
+            return
         else:
-            if int_check > 0:
+            if amount_decimal > 0:
 
                 # Convert the string input to a Decimal object
                 amount_decimal = SQLManager.to_decimal(amount)
                 # Calculate commissions using Decimal for precision
-                sale_commission = SQLManager.calculate_commission_decimal(
+                commission = SQLManager.calculate_commission_decimal(
                     amount_decimal, sale_type
                 )
-                presentation_commission = SQLManager.calculate_commission_decimal(
-                    amount_decimal, sale_type
-                )
-                if sale_type == "sale":
-                    insert_statement = """INSERT INTO sales(amount, commission, type) VALUES (?, ?, ?);"""
-                    data = (amount_decimal, sale_commission, sale_type)
-                elif sale_type == "presentation":
-                    insert_statement = """INSERT INTO sales(amount, commission, type) VALUES (?, ?, ?);"""
-                    data = (amount_decimal, presentation_commission, sale_type)
-                else:
-                    print("Provide valid data.")
+                allowed_types = ["sale", "presentation"]
+
+                if sale_type not in allowed_types:
+                    print("Invalid type")
+                    return
+
+                updates = ["amount", "type", "commission"]
+                values = [amount, sale_type, commission]
 
                 try:
                     with sqlite3.connect(self.db_path) as conn:
                         cursor = conn.cursor()
-                        cursor.execute(insert_statement, data)
+                        sql = f"""INSERT INTO sales ({', '.join(updates)}) VALUES (?, ?, ?);"""
+                        cursor.execute(sql, values)
                         conn.commit()
                 except sqlite3.Error as e:
                     print(f"Error adding sale: {e}")
