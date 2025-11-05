@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}
+  <h1>Update Sale</h1>
+{% endblock title %}
+
+{% block content %}
+  <h3>Make changes</h3>
+  <div class="content">
+    
+
+        <form action="{{ url_for('main.update_sale', id=sale_to_update.id) }}" method="POST" class="sale-form">
+      <label for="sale_date">Date</label>
+      <input type="date" name="sale_date" value="{{ sale_to_update.sale_date.strftime('%Y-%m-%d') }}" required>
+
+
+      <label for="sale_amount">Amount:</label>
+      <input type="number" step="0.01" name="sale_amount" value="{{ sale_to_update.sale_amount }}" required>
+
+      <label for="sale_type">Type:</label>
+      <select name="sale_type" required>
+        <option value="sale" {% if sale_to_update.sale_type == "sale" %}selected{% endif %}>Sale</option>
+        <option value="presentation" {% if sale_to_update.sale_type == "presentation" %}selected{% endif %}>Presentation</option>
+      </select>
+
+
+      <button type="submit">Update Sale</button>
+    </form>
+
+  </div>
+{% endblock content %}

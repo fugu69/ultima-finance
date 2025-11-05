@@ -1,9 +1,7 @@
-from flask import Flask, render_template, url_for, request, redirect
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
-from sqlalchemy import func, extract
-from decimal import Decimal, ROUND_HALF_UP
 
 # Initialize SQLAlchemy instance (outside create_app for import access)
 db = SQLAlchemy()
@@ -43,5 +41,11 @@ def create_app():
     from .main import main_blueprint as main_blueprint
 
     app.register_blueprint(main_blueprint)
+
+    # Create tables if don't exist
+
+    from .models import (
+        db as temp_db_import_for_creation,
+    )  # Import db to use it in context
 
     return app

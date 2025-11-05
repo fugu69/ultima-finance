@@ -52,26 +52,24 @@ class Sale(db.Model):
         )
 
     @staticmethod
-    def get_sales_totals(year, month):
-        # Aggregate totals
+    # KEY CHANGE: Add user_id parameter
+    def get_sales_totals(year, month, user_id):
+        # Base query to filter by user and date
+        base_query = db.session.query(func.sum(Sale.sale_amount)).filter(
+            extract("year", Sale.sale_date) == year,
+            extract("month", Sale.sale_date) == month,
+            Sale.user_id == user_id # KEY CHANGE: Filter by user_id
+        )
 
-        # fmt: off
         sales_total = (
-            db.session.query(func.sum(Sale.sale_amount))
-            .filter(Sale.sale_type == "sale")
-            .filter(extract("year", Sale.sale_date) == year)
-            .filter(extract("month", Sale.sale_date) == month)
+            base_query.filter(Sale.sale_type == "sale")
             .scalar() or Decimal("0.00")
         )
 
         presentations_total = (
-            db.session.query(func.sum(Sale.sale_amount))
-            .filter(Sale.sale_type == "presentation")
-            .filter(extract("year", Sale.sale_date) == year)
-            .filter(extract("month", Sale.sale_date) == month)
+            base_query.filter(Sale.sale_type == "presentation")
             .scalar() or Decimal("0.00")
         )
-        # fmt: on
 
         return (sales_total, presentations_total)
 
