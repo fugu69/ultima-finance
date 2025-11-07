@@ -21,3 +21,4 @@ sqlitesandbox/
 *.db
 
 migrate_old_sales.py
+instance_backup/
