@@ -8,12 +8,16 @@ ultima_finance_project/
     ├── models.py            # User model and database schema
     └── templates/
         ├── base.html        # Base template with navigation
-        ├── index.html       # Home page
+        ├── index.html       # Home page with sales dashboard
         ├── login.html       # Login form
         ├── signup.html      # Registration form
-        └── profile.html     # Protected user profile page
-    ├── instance/
-        ├── sales.sqlite
+        ├── profile.html     # Protected user profile page
+        └── update.html      # Edit sale entry
+    └── static/
+        └── css/
+            └── main.css
+    └── instance/
+        └── database_name.sqlite
     ├── migrations/
     ├── requirements.txt
     ├── run.py
