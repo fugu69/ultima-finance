@@ -21,4 +21,7 @@ ultima_finance_project/
     ├── migrations/
     ├── requirements.txt     # Libraries and dependencies
     ├── run.py               # Start the programm on a local server
+    ├── .dockerignore
+    ├── Dockerfile
+    ├── docker-compose.yml
     └── README.md

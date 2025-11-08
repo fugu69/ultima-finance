@@ -8,7 +8,7 @@ from decimal import Decimal, ROUND_HALF_UP
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100))
+    password = db.Column(db.String(255))
     name = db.Column(db.String(100))
     is_admin = db.Column(db.Boolean, default=False)
 
@@ -17,7 +17,7 @@ class User(UserMixin, db.Model):
 
 class Sale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    sale_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    sale_date = db.Column(db.DateTime, default=func.now())
     sale_amount = db.Column(db.Numeric(10, 2), nullable=False)
     sale_type = db.Column(db.String(50), nullable=False)
     commission = db.Column(db.Numeric(10, 2))
@@ -58,18 +58,16 @@ class Sale(db.Model):
         base_query = db.session.query(func.sum(Sale.sale_amount)).filter(
             extract("year", Sale.sale_date) == year,
             extract("month", Sale.sale_date) == month,
-            Sale.user_id == user_id # KEY CHANGE: Filter by user_id
+            Sale.user_id == user_id,  # KEY CHANGE: Filter by user_id
         )
 
-        sales_total = (
-            base_query.filter(Sale.sale_type == "sale")
-            .scalar() or Decimal("0.00")
+        sales_total = base_query.filter(Sale.sale_type == "sale").scalar() or Decimal(
+            "0.00"
         )
 
-        presentations_total = (
-            base_query.filter(Sale.sale_type == "presentation")
-            .scalar() or Decimal("0.00")
-        )
+        presentations_total = base_query.filter(
+            Sale.sale_type == "presentation"
+        ).scalar() or Decimal("0.00")
 
         return (sales_total, presentations_total)
 
