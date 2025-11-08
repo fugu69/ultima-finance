@@ -19,6 +19,6 @@ ultima_finance_project/
     └── instance/
         └── database_name.sqlite
     ├── migrations/
-    ├── requirements.txt
-    ├── run.py
+    ├── requirements.txt     # Libraries and dependencies
+    ├── run.py               # Start the programm on a local server
     └── README.md
