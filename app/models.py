@@ -1,6 +1,5 @@
 from . import db
 from flask_login import UserMixin
-from datetime import datetime, timezone
 from sqlalchemy import func, extract
 from decimal import Decimal, ROUND_HALF_UP
 

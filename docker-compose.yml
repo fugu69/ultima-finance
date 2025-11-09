@@ -11,9 +11,12 @@ services:
     container_name: ultima_postgres_db
     # Environment variables for PostgreSQL's internal setup
     environment:
-      POSTGRES_USER: ultima_user         # Matches the user you use in your Flask app
-      POSTGRES_PASSWORD: supersecurepassword  # Matches the password you use in your Flask app
-      POSTGRES_DB: ultima_finance         # Matches the database name
+      POSTGRES_USER: ${POSTGRES_USER}         # Matches the user you use in your Flask app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}  # Matches the password you use in your Flask app
+      POSTGRES_DB: ${POSTGRES_DB}         # Matches the database name
+    # Tell Compose to load variables from .env file
+    env_file:
+      - .env
     # Store the database files in a named volume so data is saved outside the container
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -27,17 +30,20 @@ services:
     build: .
     container_name: ultima_flask_app
     # Run the Gunicorn command defined in your Dockerfile
-    command: gunicorn --bind 0.0.0.0:8000 app:app
+    command: gunicorn --bind 0.0.0.0:8000 'app:create_app()'
     # Map the container port 8000 to your machine's port 80 (or 5000, etc.)
     ports:
       - "80:8000"
     # Environment variables for your Flask application to connect to the 'db' service
+    env_file:
+      - .env # Also load for the app service
     environment:
-      POSTGRES_USER: ultima_user
-      POSTGRES_PASSWORD: supersecurepassword
-      POSTGRES_DB: ultima_finance
       DB_HOST: db # CRITICAL: 'db' is the name of the PostgreSQL service/container
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     # Wait for the DB service to be ready before starting the Flask app
+      SECRET_KEY: ${SECRET_KEY}
     depends_on:
       - db
 

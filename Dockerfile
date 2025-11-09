@@ -29,4 +29,4 @@ EXPOSE 8000
 # The command to run when the container starts. This uses Gunicorn to serve your app.
 # The format is gunicorn --bind 0.0.0.0:<port> <module>:<app_instance>
 # 0.0.0.0 means listen on all network interfaces.
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:create_app()"]
