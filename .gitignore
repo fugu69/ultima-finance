@@ -22,3 +22,4 @@ sqlitesandbox/
 
 migrate_old_sales.py
 instance_backup/
+run.py
