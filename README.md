@@ -20,8 +20,8 @@ To run this project locally, you must have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone [YOUR_REPO_URL]
-cd ultima_finance_project
+git clone https://github.com/fugu69/ultima-finance
+cd ultima_finance
 ```
 
 ### 2. Configure Environment Variables
@@ -42,7 +42,8 @@ POSTGRES_PASSWORD=your_db_password
 POSTGRES_DB=sales_db
 
 # Host for local bare-metal commands (Docker Compose overrides this to 'db')
-DB_HOST=localhost
+DB_HOST=host_name
+DB_PORT=db_port_number
 ```
 
 ### 3. Build and Run the Stack
@@ -122,7 +123,7 @@ http://localhost/
 
 ## Development Workflow
 | Task                  |  Command                          | Reason                                  |
-|:----------------------|:---------------------------------:|----------------------------------------:|
+|:----------------------|:----------------------------------|:----------------------------------------|
 | Code Change           | `docker compose restart app`      | Quickly reloads the Gunicorn process    |
 |                       |                                   | to pick up Python changes.              |
 | Dependency Change     | `docker compose up -d --build`    | Forces a rebuild of the image           |
@@ -133,7 +134,8 @@ http://localhost/
 
 # PROJECT STRUCTURE
 
-ultima_finance_project/
+```bash
+ultima_finance/
 └── app/
     ├── __init__.py          # Flask app factory and configuration
     ├── auth.py              # Authentication routes (login, signup, logout)
@@ -156,3 +158,4 @@ ultima_finance_project/
     ├── Dockerfile              # Instructions for building the 'app' service image
     ├── docker-compose.yml      # Defines the multi-service stack (app + db)
     └── README.md
+```
