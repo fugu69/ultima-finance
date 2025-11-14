@@ -32,7 +32,7 @@ services:
       - "80:8000"
     # Environment variables for your Flask application to connect to the 'db' service
     env_file:
-      - .env # Also load for the app service
+      - ${ENV_FILE:-.env.development} # Also load for the app service
     environment:
       DB_HOST: ${DB_HOST}
       POSTGRES_USER: ${POSTGRES_USER}

@@ -1,5 +1,6 @@
 venv/
-.env
+*.env
+.env.*
 
 *.pyc
 __pycache__/
@@ -23,3 +24,4 @@ sqlitesandbox/
 migrate_old_sales.py
 instance_backup/
 run.py
+credentials.txt
