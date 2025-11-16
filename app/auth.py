@@ -35,7 +35,8 @@ def login():
         login_user(user, remember=remember)
 
         # Redirect the user to a protected page (e.g., profile)
-        return redirect(url_for("main.index"))
+        next_page = request.args.get('next')
+        return redirect(next_page or url_for("main.index"))
 
     # 3. Handle GET request or failed POST (re-render with errors)
     # For a GET request, form is empty. For a failed POST, form has errors attached.
@@ -65,6 +66,7 @@ def signup():
             db.session.add(new_user)
             db.session.commit()
             flash("Your account created! Log In now", "success")
+            return redirect(url_for("auth.login"))
         except Exception as e:
             db.session.rollback()
             flash(f"Error when create account: {e}", "danger")
