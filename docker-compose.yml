@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}         # Matches the database name
     # Tell Compose to load variables from .env file
     env_file:
-      - .env
+      - ${ENV_FILE:-development.env}
     # Store the database files in a named volume so data is saved outside the container
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -32,7 +32,7 @@ services:
       - "80:8000"
     # Environment variables for your Flask application to connect to the 'db' service
     env_file:
-      - ${ENV_FILE:-.env.development} # Also load for the app service
+      - ${ENV_FILE:-development.env} # Also load for the app service
     environment:
       DB_HOST: ${DB_HOST}
       POSTGRES_USER: ${POSTGRES_USER}

@@ -1,5 +1,5 @@
 import os
-from dotenv import load_dotenv  # <-- Import dotenv
+from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -38,10 +38,7 @@ def create_app():
     ## Generate a secure random key using secrets.token_hex(32)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 
-    # 4. Use the dynamically determined database URI
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    # --- END DATABASE URI LOGIC ---
 
     # Initialize extensions with app
     db.init_app(app)
@@ -53,7 +50,7 @@ def create_app():
     login_manager.init_app(app)
 
     # User loader function for Flask-Login
-    from .models import User, Sale
+    from .models import User
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -64,14 +61,8 @@ def create_app():
 
     app.register_blueprint(auth_blueprint)
 
-    from .main import main_blueprint as main_blueprint
+    from .main import main_blueprint
 
     app.register_blueprint(main_blueprint)
-
-    # Create tables if don't exist
-
-    from .models import (
-        db as temp_db_import_for_creation,
-    )  # Import db to use it in context
 
     return app
