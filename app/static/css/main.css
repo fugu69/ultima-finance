@@ -146,3 +146,91 @@ a:hover {
 .mt-4 {
 	margin-top: 2rem;
 }
+
+/* === LOGIN/REGISTRATION FORM STYLES === */
+
+/* Center the login box and apply background/shadow from .content */
+.login-container {
+    max-width: 400px; /* Smaller width for auth forms */
+    margin: 3rem auto;
+}
+
+.form-box {
+    padding: 1.5rem;
+}
+
+/* Grouping for spacing */
+.form-field-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #333;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #222;
+    color: #eee;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+    border-color: #00bcd4; /* Highlight focus with theme color */
+    outline: none;
+}
+
+/* Remember Me Checkbox */
+.form-remember-me {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-checkbox {
+    margin-right: 0.5rem;
+}
+
+.form-label-inline {
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+/* Error Messages */
+.form-error {
+    color: #ffcdd2; /* Light red/pink for error text */
+    background-color: #b71c1c; /* Dark red background for better visibility */
+    padding: 0.4rem;
+    margin-top: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+
+/* Submit Button */
+.form-submit-button {
+    width: 100%;
+    background-color: #00bcd4;
+    color: #fff;
+    padding: 0.75rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.form-submit-button:hover {
+    background-color: #0097a7;
+    transform: scale(1.00); /* Keep it simple for full-width button */
+}

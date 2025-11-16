@@ -2,54 +2,74 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User
+from .forms import RegistrationForm, LoginForm
 from . import db
 
 auth = Blueprint("auth", __name__)
 
 
-@auth.route("/login")
+@auth.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    # 1. Instantiate the form
+    form = LoginForm()
+
+    # 2. Check if the request is a POST and if the form passes validation
+    if form.validate_on_submit():
+        # The form data is already available via form.<field_name>.data
+        email = form.email.data
+        password = form.password.data
+        remember = form.remember.data
+
+        # Retrieve user from the database
+        user = User.query.filter_by(email=email).first()
+
+        # Check if user exists and password is correct
+        if not user or not check_password_hash(user.password, password):
+            # Display error message on the same page
+            flash("Please check your login details and try again", "danger")
+            # When validation fails or login fails, you re-render the template
+            # The form object will automatically contain the user's previously submitted data
+            return render_template("login.html", form=form)
+
+        # Successful login
+        login_user(user, remember=remember)
+
+        # Redirect the user to a protected page (e.g., profile)
+        return redirect(url_for("main.index"))
+
+    # 3. Handle GET request or failed POST (re-render with errors)
+    # For a GET request, form is empty. For a failed POST, form has errors attached.
+    return render_template("login.html", form=form)
 
 
-@auth.route("/login", methods=["POST"])
-def login_post():
-    email = request.form.get("email")
-    password = request.form.get("password")
-    remember = True if request.form.get("remember") else False
-
-    user = User.query.filter_by(email=email).first()
-
-    if not user or not check_password_hash(user.password, password):
-        flash("Please check your login details and try again")
-        return redirect(url_for("auth.login"))
-
-    login_user(user, remember=remember)
-    return redirect(url_for("main.profile"))
-
-
-@auth.route("/signup")
+@auth.route("/signup", methods=["GET", "POST"])
 def signup():
-    return render_template("signup.html")
+    form = RegistrationForm()
 
+    if form.validate_on_submit():
+        name = form.name.data
+        email = form.email.data
+        password = form.password.data
 
-@auth.route("/signup", methods=["POST"])
-def signup_post():
-    email = request.form.get("email")
-    name = request.form.get("name")
-    password = request.form.get("password")
+        user = User.query.filter_by(email=email).first()
 
-    user = User.query.filter_by(email=email).first()
+        if user:
+            flash("Email address already registrered, log in", "info")
+            return redirect(url_for("auth.login"))
 
-    if user:
-        flash("Email address already registrered, log in")
-        return redirect(url_for("auth.login"))
+        new_user = User(
+            name=name, email=email, password=generate_password_hash(password)
+        )
 
-    new_user = User(email=email, name=name, password=generate_password_hash(password))
-    db.session.add(new_user)
-    db.session.commit()
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash("Your account created! Log In now", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error when create account: {e}", "danger")
 
-    return redirect(url_for("auth.login"))
+    return render_template("signup.html", form=form)
 
 
 @auth.route("/logout")
