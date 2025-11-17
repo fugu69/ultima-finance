@@ -1,165 +1,205 @@
 /* === GLOBAL === */
 body {
-	font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-	background-color: #121212;
-	color: #e0e0e0;
-	margin: 0;
-	padding: 2rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 1.5rem;
 }
 
 h1, h3 {
-	text-align: center;
-	margin-bottom: 1rem;
-	color: #f5f5f5;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #f5f5f5;
 }
 
 .content {
-	max-width: 900px;
-	margin: 0 auto;
-	background: #1e1e1e;
-	padding: 1.5rem;
-	border-radius: 12px;
-	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+    max-width: 900px;
+    margin: 0 auto;
+    background: #1e1e1e;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
 }
 
-/* === NAVBAR === */
+/* NAVBAR — Modern Glass Style */
 .navbar {
-	background-color: #1a1a1a;
-	padding: 1rem 0;
-	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.navbar a {
-	color: #ddd;
-	margin: 0 0.8rem;
-	font-weight: 500;
-	text-decoration: none;
-	transition: color 0.2s ease;
+.navbar .logo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #00d4ff; /* Light neon cyan */
+  letter-spacing: 0.5px;
 }
 
-.navbar a:hover {
-	color: #00bcd4;
+.nav-links {
+  display: flex;
+  gap: 20px;
 }
+
+.nav-links a {
+  color: #eaeaea;
+  text-decoration: none;
+  font-size: 1rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: 0.2s ease;
+}
+
+.nav-links a:hover {
+  background: #00d4ff;
+  color: #000;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .nav-links {
+    gap: 12px;
+  }
+}
+
 
 /* === TABLES === */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto; /* RESPONSIVE SCROLL */
+}
+
 table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-bottom: 1.5rem;
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    min-width: 600px; /* Prevent squishing columns on mobile */
 }
 
 th, td {
-	padding: 0.75rem 1rem;
-	text-align: left;
-	border-bottom: 1px solid #2c2c2c;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #2c2c2c;
 }
 
 th {
-	background-color: #252525;
-	font-weight: 600;
-	color: #e0e0e0;
+    background-color: #252525;
+    font-weight: 600;
+    color: #e0e0e0;
 }
 
 tr:hover {
-	background-color: #1f1f1f;
+    background-color: #1f1f1f;
 }
 
 td:last-child {
-	text-align: center;
+    text-align: center;
 }
 
 /* === LINKS === */
 a {
-	color: #00bcd4;
-	text-decoration: none;
+    color: #00bcd4;
+    text-decoration: none;
 }
 
 a:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 /* === FORMS === */
 .sale-form {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.8rem;
-	justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem;
+    justify-content: center;
 }
 
 .sale-form label {
-	font-weight: 500;
+    font-weight: 500;
 }
 
 .sale-form input,
 .sale-form select {
-	padding: 0.4rem 0.6rem;
-	border: 1px solid #333;
-	border-radius: 6px;
-	font-size: 0.95rem;
-	background-color: #222;
-	color: #eee;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #333;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background-color: #222;
+    color: #eee;
 }
 
 .sale-form button {
-	background-color: #00bcd4;
-	color: #fff;
-	padding: 0.5rem 1.2rem;
-	border: none;
-	border-radius: 6px;
-	cursor: pointer;
-	font-size: 1rem;
-	transition: background-color 0.2s ease, transform 0.1s ease;
+    background-color: #00bcd4;
+    color: #fff;
+    padding: 0.5rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .sale-form button:hover {
-	background-color: #0097a7;
-	transform: scale(1.02);
+    background-color: #0097a7;
+    transform: scale(1.02);
 }
 
 /* === ALERTS === */
 .alert {
-	padding: 1rem;
-	margin-bottom: 1rem;
-	border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
 }
 
 .alert-success {
-	background-color: #1b5e20;
-	color: #a5d6a7;
+    background-color: #1b5e20;
+    color: #a5d6a7;
 }
 
 .alert-error {
-	background-color: #b71c1c;
-	color: #ffcdd2;
+    background-color: #b71c1c;
+    color: #ffcdd2;
 }
 
 /* === UTILITIES === */
 .text-center {
-	text-align: center;
+    text-align: center;
 }
 
 .mt-2 {
-	margin-top: 1rem;
+    margin-top: 1rem;
 }
 
 .mt-4 {
-	margin-top: 2rem;
+    margin-top: 2rem;
 }
 
 /* === LOGIN/REGISTRATION FORM STYLES === */
-
-/* Center the login box and apply background/shadow from .content */
 .login-container {
-    max-width: 400px; /* Smaller width for auth forms */
+    max-width: 400px;
     margin: 3rem auto;
+    width: 100%;
+    padding: 0 1rem;
 }
 
 .form-box {
     padding: 1.5rem;
 }
 
-/* Grouping for spacing */
 .form-field-group {
     margin-bottom: 1.2rem;
 }
@@ -180,16 +220,15 @@ a:hover {
     font-size: 1rem;
     background-color: #222;
     color: #eee;
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    box-sizing: border-box;
     transition: border-color 0.2s ease;
 }
 
 .form-input:focus {
-    border-color: #00bcd4; /* Highlight focus with theme color */
+    border-color: #00bcd4;
     outline: none;
 }
 
-/* Remember Me Checkbox */
 .form-remember-me {
     margin-bottom: 1.5rem;
     display: flex;
@@ -205,18 +244,15 @@ a:hover {
     font-weight: 400;
 }
 
-/* Error Messages */
 .form-error {
-    color: #ffcdd2; /* Light red/pink for error text */
-    background-color: #b71c1c; /* Dark red background for better visibility */
+    color: #ffcdd2;
+    background-color: #b71c1c;
     padding: 0.4rem;
     margin-top: 0.5rem;
     border-radius: 4px;
     font-size: 0.85rem;
 }
 
-
-/* Submit Button */
 .form-submit-button {
     width: 100%;
     background-color: #00bcd4;
@@ -232,5 +268,38 @@ a:hover {
 
 .form-submit-button:hover {
     background-color: #0097a7;
-    transform: scale(1.00); /* Keep it simple for full-width button */
+    transform: scale(1.00);
+}
+
+/* === RESPONSIVE BREAKPOINTS === */
+
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    .sale-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sale-form input,
+    .sale-form select,
+    .sale-form button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    h1, h3 {
+        font-size: 1.3rem;
+    }
+
+    .form-box {
+        padding: 1.2rem;
+    }
 }
