@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Welcome! Let's see your sales</h2>
+
+{% if sales %}
+<ul>
+	{% for sale in sales %}
+	<li>{{ sale }}</li>
+	{% endfor %}
+</ul>
+{% else %}
+<h3>Sorry, no data yet</h3>
+{% endif %}
+{% endblock content %}
