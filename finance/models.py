@@ -9,7 +9,8 @@ class Sale(models.Model):
         CARD = "CARD", "Card"
         GUIDE_CREDIT = "GC", "Guide Credit"
 
-    sale_amount = models.DecimalField(max_digits=6, decimal_places=2)
+    # max_digits include decimal_places, so choose wisely
+    sale_amount = models.DecimalField(max_digits=8, decimal_places=2)
     payment_type = models.CharField(
         max_length=4, choices=PaymentChoices.choices,
         default=PaymentChoices.CASH_THAI_BAHT

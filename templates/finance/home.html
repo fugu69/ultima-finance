@@ -4,11 +4,29 @@
 <h2>Welcome! Let's see your sales</h2>
 
 {% if sales %}
-<ul>
-	{% for sale in sales %}
-	<li>{{ sale }}</li>
-	{% endfor %}
-</ul>
+<div class="hero">
+  <div class="table-window">
+    <table class="sales-table">
+      <thead>
+        <tr>
+          <th>Amount</th>
+          <th>Pay by</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sale in sales %}
+        <tr>
+          <td data-label="Amount">{{ sale.sale_amount }}</td>
+          <td data-label="Payment Method">{{ sale.get_payment_type_display }}</td>	
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="summary-window">
+    <h2>Sales Total: {{ total_sale_amount }}</h2>
+  </div>
+</div>
 {% else %}
 <h3>Sorry, no data yet</h3>
 {% endif %}
