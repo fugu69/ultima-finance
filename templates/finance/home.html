@@ -2,6 +2,7 @@
 
 {% block content %}
 <h2>Welcome! Let's see your sales</h2>
+<p><a href="{% url "sale_create" %}">Add new sale</a></p>
 
 {% if sales %}
 <div class="hero">
@@ -11,13 +12,24 @@
         <tr>
           <th>Amount</th>
           <th>Pay by</th>
+          <th>Date</th>
+          <th colspan='2'>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for sale in sales %}
         <tr>
-          <td data-label="Amount">{{ sale.sale_amount }}</td>
-          <td data-label="Payment Method">{{ sale.get_payment_type_display }}</td>	
+          <td data-label="Amount">
+            <a href="{% url "sale_detail" sale.id %}">{{ sale.sale_amount }}</a>
+          </td>
+          <td data-label="Payment Method">{{ sale.get_payment_type_display }}</td>
+          <td>{{ sale.created_at|date:"d E Y" }}</td>
+          <td data-label="Update">
+            <a href="{% url "sale_update" sale.id %}">Update</a>
+          </td>
+          <td data-label="Delete">
+            <a href="{% url "sale_delete" sale.id %}">Delete</a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
