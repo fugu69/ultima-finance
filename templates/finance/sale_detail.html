@@ -1,4 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<p>detail</p>
+<h1>Details</h1>
+<h2>Amount</h2>
+<p>{{ sale.amount }}</p>
+
+<h2>Payment Type</h2>
+<p>{{ sale.payment_type }}</p>
+
+<h2>Date</h2>
+<p>{{ sale.created_at }}</p>
 {% endblock content %}

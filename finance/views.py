@@ -43,6 +43,7 @@ class SaleUpdateView(UpdateView):
     model = Sale
     template_name = "finance/sale_update.html"
     fields = ["sale_amount", "payment_type"]
+    success_url = reverse_lazy("home")
 
 
 class SaleDeleteView(DeleteView):

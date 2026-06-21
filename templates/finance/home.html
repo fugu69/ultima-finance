@@ -20,7 +20,7 @@
         {% for sale in sales %}
         <tr>
           <td data-label="Amount">
-            <a href="{% url "sale_detail" sale.id %}">{{ sale.sale_amount }}</a>
+            <a href="{{ sale.get_absolute_url }}">{{ sale.sale_amount }}</a>
           </td>
           <td data-label="Payment Method">{{ sale.get_payment_type_display }}</td>
           <td>{{ sale.created_at|date:"d E Y" }}</td>
