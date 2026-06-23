@@ -6,6 +6,7 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = CustomUser
         fields = UserCreationForm.Meta.fields + (  # username by default
+            "email",
             "actual_start_date",
             "official_hire_date",
             "base_salary",
