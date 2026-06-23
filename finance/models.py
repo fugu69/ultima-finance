@@ -1,4 +1,7 @@
+from django.conf import settings
 from django.db import models
+from django.core.validators import MinValueValidator
+from decimal import Decimal
 from django.urls import reverse
 
 
@@ -11,7 +14,9 @@ class Sale(models.Model):
         GUIDE_CREDIT = "GC", "Guide Credit"
 
     # max_digits include decimal_places, so choose wisely
-    sale_amount = models.DecimalField(max_digits=8, decimal_places=2)
+    sale_amount = models.DecimalField(
+        max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+    )
     payment_type = models.CharField(
         max_length=4,
         choices=PaymentChoices.choices,
@@ -20,7 +25,7 @@ class Sale(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    salesman = models.ForeignKey("auth.User", on_delete=models.CASCADE)
+    salesman = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ["-created_at"]
