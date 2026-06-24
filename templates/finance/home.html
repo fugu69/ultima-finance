@@ -25,6 +25,7 @@
           <th>Pay by</th>
           <th>Date</th>
           <th colspan='2'>Actions</th>
+          <th>Comments</th>
         </tr>
       </thead>
       <tbody>
@@ -42,6 +43,13 @@
           </td>
           <td data-label="Delete">
             <a href="{% url "sale_delete" sale.id %}">Delete</a>
+          </td>
+          <td data-label="Latest Comment">
+            {% if sale.comment_set.exists %}
+              {{ sale.comment_set.last.comment }}
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
           </td>
           {% endif %}
 
