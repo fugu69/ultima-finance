@@ -35,3 +35,18 @@ class Sale(models.Model):
 
     def __str__(self) -> str:
         return f"{self.sale_amount}, {self.payment_type}"
+
+
+class Comment(models.Model):
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
+    comment = models.CharField(max_length=140)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return self.comment
+
+    def get_absolute_url(self):
+        return reverse("sale_detail", kwargs={"pk": self.pk})
