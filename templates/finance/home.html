@@ -34,13 +34,17 @@
             <a href="{{ sale.get_absolute_url }}">{{ sale.sale_amount }}</a>
           </td>
           <td data-label="Payment Method">{{ sale.get_payment_type_display }}</td>
+
           <td>{{ sale.created_at|date:"d E Y" }}</td>
+          {% if sale.salesman.pk == request.user.pk %}
           <td data-label="Update">
             <a href="{% url "sale_update" sale.id %}">Update</a>
           </td>
           <td data-label="Delete">
             <a href="{% url "sale_delete" sale.id %}">Delete</a>
           </td>
+          {% endif %}
+
         </tr>
         {% endfor %}
       </tbody>

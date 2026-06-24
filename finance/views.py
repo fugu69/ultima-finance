@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.views.generic import (
@@ -41,19 +41,31 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class SaleDetailView(LoginRequiredMixin, DetailView):
+class SaleDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Sale
     template_name = "finance/sale_detail.html"
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.salesman == self.request.user
 
-class SaleUpdateView(LoginRequiredMixin, UpdateView):
+
+class SaleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Sale
     template_name = "finance/sale_update.html"
     fields = ["sale_amount", "payment_type"]
     success_url = reverse_lazy("home")
 
+    def test_func(self):
+        obj = self.get_object()
+        return obj.salesman == self.request.user
 
-class SaleDeleteView(LoginRequiredMixin, DeleteView):
+
+class SaleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Sale
     template_name = "finance/sale_delete.html"
     success_url = reverse_lazy("home")
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.salesman == self.request.user
