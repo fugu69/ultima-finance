@@ -1,3 +1,4 @@
+from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.forms import BaseModelForm
 from django.http import HttpResponse
@@ -12,7 +13,8 @@ from django.db.models import Sum
 from django.urls import reverse_lazy
 
 
-from .models import Sale
+from .models import Sale, Comment
+from .forms import CommentForm
 
 
 class HomePageView(ListView):
@@ -48,6 +50,22 @@ class SaleDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     def test_func(self):
         obj = self.get_object()
         return obj.salesman == self.request.user
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = CommentForm()
+        return context
+    
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = Comment
+    fields = ["comment"]
+
+    def form_valid(self, form):
+        # Привязываем залогиненного юзера к комменту
+        form.instance.author = self.request.user
+        # Вытаскиваем id продажи из урла и привязываем коммент к ней
+        form.instance.sale_id = self.kwargs["sale_pk"]
+        return super().form_valid(form)
 
 
 class SaleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
