@@ -1,3 +1,5 @@
+from django.forms import BaseModelForm
+from django.http import HttpResponse
 from django.views.generic import (
     ListView,
     CreateView,
@@ -30,8 +32,12 @@ class HomePageView(ListView):
 class SaleCreateView(CreateView):
     model = Sale
     template_name = "finance/sale_create.html"
-    fields = ["sale_amount", "salesman", "payment_type"]
+    fields = ["sale_amount", "payment_type"]
     success_url = reverse_lazy("home")
+
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        form.instance.salesman = self.request.user
+        return super().form_valid(form)
 
 
 class SaleDetailView(DetailView):
