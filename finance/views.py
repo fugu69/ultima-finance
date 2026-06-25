@@ -97,6 +97,16 @@ class SaleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         obj = self.get_object()
         return obj.salesman == self.request.user
+    
+    def get_success_url(self):
+        # Смотрим, какой параметр прилетел в URL (?next=dashboard или ?next=detail)
+        next_page = self.request.GET.get("next")
+        
+        if next_page == "dashboard":
+            return reverse_lazy("dashboard")
+        
+        # По дефолту (или если пришли из карточки) возвращаем на детальный просмотр этой сделки
+        return reverse_lazy("sale_detail", kwargs={"pk": self.object.pk})
 
 
 class SaleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

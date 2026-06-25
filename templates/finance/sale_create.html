@@ -1,9 +1,40 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h1>New Sale</h1>
-<form action="" method="post">
-{% csrf_token %}
-{{ form }}
-<input type="submit" value="Save">
-</form>
+<div class="max-w-[1200px] mx-auto px-4 py-12 flex justify-center">
+
+    <div class="max-w-xl w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
+        
+        <div class="border-b border-gray-100 pb-4 mb-6">
+            <h1 class="text-2xl font-extrabold text-gray-950 tracking-tight">
+                Новая продажа
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Заполните данные сделки для внесения в систему.
+            </p>
+        </div>
+
+        <form action="" method="post" class="space-y-5 [&_label]:block [&_label]:text-sm [&_label]:font-medium [&_label]:text-gray-700 [&_label]:mb-1.5 [&_input]:w-full [&_input]:rounded-xl [&_input]:border-gray-200 [&_input]:border [&_input]:px-4 [&_input]:py-2.5 [&_input]:text-sm [&_input]:focus:border-gray-950 [&_input]:focus:ring-1 [&_input]:focus:ring-gray-950 [&_select]:w-full [&_select]:rounded-xl [&_select]:border-gray-200 [&_select]:border [&_select]:px-4 [&_select]:py-2.5 [&_select]:text-sm [&_select]:focus:border-gray-950 [&_select]:focus:ring-1 [&_select]:focus:ring-gray-950">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                {{ form.as_p }}
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                <a href="{% url 'dashboard' %}" 
+                   class="text-sm font-medium text-gray-500 hover:text-gray-900 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition duration-150">
+                    Отмена
+                </a>
+                
+                <button type="submit" 
+                        class="bg-gray-950 hover:bg-gray-800 text-white font-medium text-sm py-2.5 px-6 rounded-xl transition duration-150 ease-in-out cursor-pointer">
+                    Сохранить
+                </button>
+            </div>
+        </form>
+        
+    </div>
+
+</div>
 {% endblock content %}

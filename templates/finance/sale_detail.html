@@ -1,38 +1,88 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
 
 {% block content %}
+<div class="max-w-[1200px] mx-auto px-4 py-8">
 
-<h1>Details</h1>
-<h2>Amount</h2>
-<p>{{ sale.amount }}</p>
+    <div class="mb-6">
+        <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Назад к списку
+        </a>
+    </div>
 
-<h2>Payment Type</h2>
-<p>{{ sale.payment_type }}</p>
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 lg:col-span-1 flex flex-col justify-between h-full">
+            <div>
+                <div class="border-b border-gray-100 pb-4 mb-4">
+                    <span class="text-xs font-medium text-gray-400 uppercase tracking-wider block">Сумма сделки</span>
+                    <span class="text-3xl font-extrabold text-gray-950">{{ sale.sale_amount }} ฿</span>
+                </div>
 
-<h2>Date</h2>
-<p>{{ sale.created_at }}</p>
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Тип оплаты</span>
+                        <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.get_payment_type_display }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Дата регистрации</span>
+                        <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.created_at|date:"d E Y в H:i" }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Менеджер</span>
+                        <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.salesman.username }}</span>
+                    </div>
+                </div>
+            </div>
 
-<h2>Owner</h2>
-<p>{{ sale.salesman }}</p>
+            <div class="mt-8 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-medium">
+                <a href="{% url 'sale_update' sale.id %}?next=detail" class="text-blue-600 hover:text-blue-800 hover:underline">Редактировать</a>
+                <a href="{% url 'sale_delete' sale.id %}" class="text-red-600 hover:text-red-800 hover:underline">Удалить сделку</a>
+            </div>
+        </div>
 
-<h2>Comments</h2>
-<div class="comments-section">
-    {% for comment in object.comment_set.all %}
-    <p>
-        <span class="fw-bold">{{ comment.author }}:</span> 
-        {{ comment.comment }}
-    </p>
-    {% empty %}
-    <p>No comments yet</p>
-    {% endfor %}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 lg:col-span-3 flex flex-col justify-between h-full">
+            <div>
+                <h2 class="text-lg font-bold text-gray-950 border-b border-gray-100 pb-4 mb-6">
+                    История заметок и комментариев
+                </h2>
 
-    <h4>Add a comment</h4>
-    <form action="{% url 'comment_create' sale.id %}" method="post">
-        {% csrf_token %}
-        <input type="text" name="comment" required>
-        <button type="submit">Add Comment</button>
-    </form>
+                <div class="space-y-4 mb-8">
+                    {% for comment in sale.comment_set.all %}
+                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-2">
+                            <p class="text-sm text-gray-800 leading-relaxed">
+                                {{ comment.comment }}
+                            </p>
+                            <div class="text-right">
+                                <span class="text-[11px] font-medium text-gray-400 inline-block bg-white border border-gray-100 rounded-md px-2 py-0.5">
+                                    {{ comment.created_at|date:"d F Y в H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-12 text-sm text-gray-400 font-medium bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                            К этой сделке ещё нет ни одного комментария.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-gray-100">
+                <h3 class="text-sm font-bold text-gray-900 mb-3">Добавить новую заметку</h3>
+                <form action="{% url 'comment_create' sale.id %}" method="post" class="space-y-3">
+                    {% csrf_token %}
+                    <div>
+                        <input type="text" name="comment" required placeholder="Напишите детали..." class="w-full rounded-xl border-gray-200 border px-4 py-2.5 text-sm focus:border-gray-950 focus:ring-1 focus:ring-gray-950">
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-gray-950 hover:bg-gray-800 text-white font-medium text-sm py-2 px-5 rounded-xl transition duration-150 ease-in-out cursor-pointer">Добавить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
 </div>
-
 {% endblock content %}
