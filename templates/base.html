@@ -1,20 +1,46 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>{% block title %}Ultima Finance{% endblock title %}</title>
-
-	<script src="https://cdn.tailwindcss.com"></script>
-
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-
-	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultima Finance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-	<h1><a href="{% url 'home' %}">Ultima Finance</a></h1>
-	{% block content %}{% endblock content %}
+<body class="bg-gray-50 text-gray-900 antialiased min-h-screen flex flex-col">
+
+    <header class="border-b border-gray-200 bg-white shadow-sm">
+        <div class="max-w-[1200px] mx-auto px-4 py-4 flex items-center justify-between">
+            
+            <a href="{% url 'home' %}" class="flex items-center gap-2 group">
+                <span class="w-2.5 h-6 bg-gray-950 rounded-full group-hover:bg-gray-800 transition duration-150"></span>
+                
+                <span class="text-xl font-bold text-gray-950 tracking-tight transition group-hover:text-gray-800">
+                    Ultima<span class="font-light text-gray-400">Finance</span>
+                </span>
+            </a>
+
+            <nav class="flex items-center gap-4">
+                {% if user.is_authenticated %}
+                    <form action="{% url 'logout' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-sm text-gray-500 hover:text-gray-900 transition cursor-pointer bg-transparent border-0 p-0 container-snap">
+                            Выйти
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-sm text-gray-600 hover:text-gray-900 transition">Войти</a>
+                {% endif %}
+            </nav>
+
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        {% block content %}
+        {% endblock content %}
+    </main>
+
 </body>
 </html>
