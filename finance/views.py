@@ -45,7 +45,7 @@ class HomePageView(LoginRequiredMixin, ListView):
         # get_queryset() вернет данные для авторизованного пользователя
         # aggregate() вернет словарь вида: {'sale_amount__sum': 15400.00}
         # name__sum is name convention
-        total_sum = self.get_queryset().aaggregate(Sum("sale_amount"))
+        total_sum = self.get_queryset().aggregate(Sum("sale_amount"))
         context["total_sale_amount"] = total_sum["sale_amount__sum"] or 0
 
         return context
