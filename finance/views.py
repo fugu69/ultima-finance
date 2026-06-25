@@ -1,8 +1,9 @@
-from django.urls import reverse
+from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.views.generic import (
+    TemplateView,
     ListView,
     CreateView,
     DetailView,
@@ -17,16 +18,34 @@ from .models import Sale, Comment
 from .forms import CommentForm
 
 
-class HomePageView(ListView):
+class LandingPageView(TemplateView):
+    template_name = "finance/landing.html"
+
+    # Метод dispatch срабатывает ДО того, как вьюха начнет обрабатывать GET или POST.
+    # Это идеальное место, чтобы проверить паспорт юзера на входе.
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("dashboard")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class HomePageView(LoginRequiredMixin, ListView):
     model = Sale
     template_name = "finance/home.html"
     context_object_name = "sales"
 
+    # Перехватываем стандартный запрос к БД и фильтруем его
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Из базы поднимутся только строки, где salesman — это тот, кто сейчас залогинен
+        return queryset.filter(salesman=self.request.user)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # get_queryset() вернет данные для авторизованного пользователя
         # aggregate() вернет словарь вида: {'sale_amount__sum': 15400.00}
         # name__sum is name convention
-        total_sum = Sale.objects.aggregate(Sum("sale_amount"))
+        total_sum = self.get_queryset().aaggregate(Sum("sale_amount"))
         context["total_sale_amount"] = total_sum["sale_amount__sum"] or 0
 
         return context
@@ -55,7 +74,8 @@ class SaleDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["form"] = CommentForm()
         return context
-    
+
+
 class CommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
     fields = ["comment"]
