@@ -12,72 +12,76 @@
         </a>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
         
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 lg:col-span-1 flex flex-col justify-between h-full">
-            <div>
-                <div class="border-b border-gray-100 pb-4 mb-4">
-                    <span class="text-xs font-medium text-gray-400 uppercase tracking-wider block">Сумма сделки</span>
-                    <span class="text-3xl font-extrabold text-gray-950">{{ sale.sale_amount }} ฿</span>
-                </div>
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 lg:col-span-1">
+            <div class="border-b border-gray-100 pb-4 mb-4">
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider block">Сумма сделки</span>
+                <span class="text-3xl font-extrabold text-gray-950">{{ sale.sale_amount }} ฿</span>
+            </div>
 
-                <div class="space-y-4 text-sm">
-                    <div>
-                        <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Тип оплаты</span>
-                        <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.get_payment_type_display }}</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Дата регистрации</span>
-                        <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.created_at|date:"d E Y в H:i" }}</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Менеджер</span>
-                        <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.salesman.username }}</span>
-                    </div>
+            <div class="space-y-4 text-sm">
+                <div>
+                    <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Тип оплаты</span>
+                    <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.get_payment_type_display }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Дата регистрации</span>
+                    <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.created_at|date:"d E Y в H:i" }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Менеджер</span>
+                    <span class="font-semibold text-gray-900 mt-0.5 block">{{ sale.salesman.username }}</span>
                 </div>
             </div>
 
             <div class="mt-8 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-medium">
                 <a href="{% url 'sale_update' sale.id %}?next=detail" class="text-blue-600 hover:text-blue-800 hover:underline">Редактировать</a>
-                <a href="{% url 'sale_delete' sale.id %}" class="text-red-600 hover:text-red-800 hover:underline">Удалить сделку</a>
+                <a href="{% url 'sale_delete' sale.id %}?next=detail" class="text-red-600 hover:text-red-800 hover:underline">Удалить сделку</a>
             </div>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 lg:col-span-3 flex flex-col justify-between h-full">
-            <div>
-                <h2 class="text-lg font-bold text-gray-950 border-b border-gray-100 pb-4 mb-6">
-                    История заметок и комментариев
-                </h2>
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 lg:col-span-3">
+            <h2 class="text-lg font-bold text-gray-950 border-b border-gray-100 pb-4 mb-6">
+                История заметок и комментариев
+            </h2>
 
-                <div class="space-y-4 mb-8">
-                    {% for comment in sale.comment_set.all %}
-                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-2">
-                            <p class="text-sm text-gray-800 leading-relaxed">
-                                {{ comment.comment }}
-                            </p>
-                            <div class="text-right">
-                                <span class="text-[11px] font-medium text-gray-400 inline-block bg-white border border-gray-100 rounded-md px-2 py-0.5">
-                                    {{ comment.created_at|date:"d F Y в H:i" }}
-                                </span>
-                            </div>
+            <div class="space-y-4 mb-8">
+                {% for comment in sale.comment_set.all %}
+                    <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-2">
+                        <p class="text-sm text-gray-800 leading-relaxed">
+                            {{ comment.comment }}
+                        </p>
+                        <div class="text-right">
+                            <span class="text-[11px] font-medium text-gray-400 inline-block bg-white border border-gray-100 rounded-md px-2 py-0.5">
+                                {{ comment.created_at|date:"d F Y в H:i" }}
+                            </span>
                         </div>
-                    {% empty %}
-                        <div class="text-center py-12 text-sm text-gray-400 font-medium bg-gray-50 border border-dashed border-gray-200 rounded-xl">
-                            К этой сделке ещё нет ни одного комментария.
-                        </div>
-                    {% endfor %}
-                </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-12 text-sm text-gray-400 font-medium bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                        К этой сделке ещё нет ни одного комментария.
+                    </div>
+                {% endfor %}
             </div>
 
             <div class="pt-6 border-t border-gray-100">
                 <h3 class="text-sm font-bold text-gray-900 mb-3">Добавить новую заметку</h3>
+                
                 <form action="{% url 'comment_create' sale.id %}" method="post" class="space-y-3">
                     {% csrf_token %}
                     <div>
-                        <input type="text" name="comment" required placeholder="Напишите детали..." class="w-full rounded-xl border-gray-200 border px-4 py-2.5 text-sm focus:border-gray-950 focus:ring-1 focus:ring-gray-950">
+                        <input type="text" 
+                               name="comment" 
+                               required 
+                               placeholder="Напишите details (например: 'Батоны отгружены, ждем апрув')" 
+                               class="w-full rounded-xl border-gray-200 border px-4 py-2.5 text-sm focus:border-gray-950 focus:ring-1 focus:ring-gray-950">
                     </div>
                     <div class="flex justify-end">
-                        <button type="submit" class="bg-gray-950 hover:bg-gray-800 text-white font-medium text-sm py-2 px-5 rounded-xl transition duration-150 ease-in-out cursor-pointer">Добавить</button>
+                        <button type="submit" 
+                                class="bg-gray-950 hover:bg-gray-800 text-white font-medium text-sm py-2 px-5 rounded-xl transition duration-150 ease-in-out cursor-pointer">
+                            Добавить
+                        </button>
                     </div>
                 </form>
             </div>
