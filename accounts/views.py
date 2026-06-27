@@ -63,6 +63,7 @@ class SafePasswordResetCompleteView(
 
 
 # 6. Регистрация нового пользователя (теперь тоже защищена миксином)
+@method_decorator(never_cache, name="dispatch")
 class SignUpView(RedirectAuthenticatedUserMixin, CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy("login")
