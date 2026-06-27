@@ -1,21 +1,38 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
-from accounts.forms import StyledAuthenticationForm
+
+from accounts.views import (
+    SafeLoginView,
+    SafePasswordResetView,
+    SafePasswordResetConfirmView,
+    SafePasswordResetDoneView,
+    SafePasswordResetCompleteView,
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
+    path("accounts/login/", SafeLoginView.as_view(), name="login"),
     path(
-        'accounts/login/', 
-        auth_views.LoginView.as_view(form_class=StyledAuthenticationForm), 
-        name='login'
+        "accounts/password_reset/",
+        SafePasswordResetView.as_view(),
+        name="password_reset",
     ),
-    # 1. Custom authentication app (Handles Sign Up)
+    path(
+        "accounts/reset/<uidb64>/<token>/",
+        SafePasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
+    path(
+        "accounts/password_reset/done/",
+        SafePasswordResetDoneView.as_view(),
+        name="password_reset_done",
+    ),
+    path(
+        "accounts/reset/done/",
+        SafePasswordResetCompleteView.as_view(),
+        name="password_reset_complete",
+    ),
     path("accounts/", include("accounts.urls")),
-    
-    # 2. Built-in Django auth system (Handles Log In, Log Out, Passwords)
     path("accounts/", include("django.contrib.auth.urls")),
-    
-    # 3. Core application homepage
-    path('', include('finance.urls'))
+    path("", include("finance.urls")),
 ]
