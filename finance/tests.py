@@ -44,6 +44,21 @@ class DashboardAccessAndTemplateTests(TestCase):
         self.assertContains(response, "1000")
         self.assertNotContains(response, "5000")
 
+    def test_dashboard_contains_correct_action_links(self):
+        """Проверяем, что в таблице дашборда ссылки Update и Delete сформированы с флагом ?next=dashboard"""
+        self.client.login(username="dima", password="password123")
+        response = self.client.get(self.dashboard_url)
+        
+        # Получаем динамический ID созданной в setUp сделки Димы
+        sale_id = Sale.objects.filter(salesman=self.user_dima).first().id
+        
+        # Проверяем, что в сыром HTML страницы лежат правильные адреса с хвостом ?next=dashboard
+        expected_update_url = f'{reverse("sale_update", kwargs={"pk": sale_id})}?next=dashboard'
+        expected_delete_url = f'{reverse("sale_delete", kwargs={"pk": sale_id})}?next=dashboard'
+        
+        self.assertContains(response, expected_update_url)
+        self.assertContains(response, expected_delete_url)
+
 
 # =====================================================================
 # 2. ТЕСТЫ БИЗНЕС-ЛОГИКИ И АГРЕГАЦИИ СУММ
@@ -129,3 +144,48 @@ class SaleCommentTests(TestCase):
         comment_entry = Comment.objects.first()
         self.assertEqual(comment_entry.comment, "Документы отправлены клиенту")
         self.assertEqual(comment_entry.sale, self.sale)
+
+# =====================================================================
+# 5. ТЕСТЫ ЖИЗНЕННОГО ЦИКЛА УДАЛЕНИЯ (DELETE FLOW & REDIRECTS)
+# =====================================================================
+class SaleDeleteLifecycleTests(TestCase):
+
+    def setUp(self):
+        self.user_dima = User.objects.create_user(username="dima", password="password123")
+        self.sale = Sale.objects.create(
+            salesman=self.user_dima, 
+            sale_amount=Decimal("1000.00"), 
+            payment_type="THB"
+        )
+        self.delete_url = reverse("sale_delete", kwargs={"pk": self.sale.pk})
+        self.dashboard_url = reverse("dashboard")
+
+    def test_sale_delete_page_renders_correct_template(self):
+        """Страница подтверждения удаления отдает 200 OK и использует правильный шаблон"""
+        self.client.login(username="dima", password="password123")
+        response = self.client.get(self.delete_url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "finance/sale_delete.html")
+
+    def test_sale_delete_redirect_to_dashboard_with_next_param(self):
+        """При удалении с дашборда (?next=dashboard) POST-запрос возвращает на дашборд и стирает запись"""
+        self.client.login(username="dima", password="password123")
+        
+        # Имитируем отправку формы с параметром ?next=dashboard в URL
+        response = self.client.post(f"{self.delete_url}?next=dashboard")
+        
+        # Должен сработать редирект на дашборд
+        self.assertRedirects(response, self.dashboard_url)
+        # Записи в базе больше быть не должно
+        self.assertEqual(Sale.objects.filter(pk=self.sale.pk).count(), 0)
+
+    def test_sale_delete_default_redirect_to_dashboard(self):
+        """Если сделка удаляется без параметра next (например, из деталей), дефолтный редирект ведет на дашборд"""
+        self.client.login(username="dima", password="password123")
+        
+        # Отправляем POST без GET-параметров
+        response = self.client.post(self.delete_url)
+        
+        self.assertRedirects(response, self.dashboard_url)
+        self.assertEqual(Sale.objects.filter(pk=self.sale.pk).count(), 0)

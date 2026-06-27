@@ -112,8 +112,17 @@ class SaleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 class SaleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Sale
     template_name = "finance/sale_delete.html"
-    success_url = reverse_lazy("home")
 
     def test_func(self):
         obj = self.get_object()
         return obj.salesman == self.request.user
+
+    def get_success_url(self):
+        # Если удалили из дашборда или карточки, возвращаем на дашборд
+        next_page = self.request.GET.get("next")
+        
+        if next_page == "dashboard":
+            return reverse_lazy("dashboard")
+            
+        # По дефолту после удаления сделки тоже отправляем на дашборд
+        return reverse_lazy("dashboard")
