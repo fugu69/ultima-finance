@@ -1,0 +1,29 @@
+services:
+  ultima_db:
+    image: postgres:17.10
+    container_name: ultima_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+
+  ultima_web:
+    build: .
+    container_name: ultima_web
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ultima_db
+
+volumes:
+  postgres_data:
