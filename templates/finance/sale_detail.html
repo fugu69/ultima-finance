@@ -47,7 +47,7 @@
             </h2>
 
             <div class="space-y-4 mb-8">
-                {% for comment in sale.comment_set.all %}
+                {% for comment in sale.comments.all %}
                     <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-2">
                         <p class="text-sm text-gray-800 leading-relaxed">
                             {{ comment.comment }}
