@@ -6,3 +6,4 @@ staticfiles/
 media/
 fresh_dump.json
 backups/
+docker-compose.override.yml

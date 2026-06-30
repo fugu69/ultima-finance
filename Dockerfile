@@ -24,5 +24,4 @@ COPY . /app/
 # Открываем порт, на котором обычно крутится Django
 EXPOSE 8000
 
-# Стандартная команда для запуска (пока оставим runserver, потом заменим на gunicorn)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "config.wsgi:application"]
