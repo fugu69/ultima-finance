@@ -17,9 +17,26 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=${DEBUG}
+      - DEBUG=${DEBUG:-False}
     ports:
       - "8000:8000"
+    depends_on:
+      - ultima_db
+
+  ultima_backup:
+    image: prodrigestivill/postgres-backup-local:17
+    container_name: ultima_backup
+    restart: unless-stopped
+    environment:
+      - POSTGRES_HOST=ultima_db
+      - POSTGRES_CLUSTER=true
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_BACKUP_PRUNE_DAYSS=7
+      - SCHEDULE=@daily
+    volumes:
+      - ./backups:/backups
     depends_on:
       - ultima_db
 
