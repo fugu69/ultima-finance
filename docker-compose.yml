@@ -23,6 +23,15 @@ services:
     depends_on:
       - ultima_db
 
+  ultima_tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: ultima_tunnel
+    restart: unless-stopped
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - ultima_web
+
   ultima_backup:
     image: prodrigestivill/postgres-backup-local:17
     container_name: ultima_backup
