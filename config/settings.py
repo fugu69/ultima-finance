@@ -32,6 +32,11 @@ SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=not DEBUG)
 # Флаг указывает браузеру передавать CSRF-куку ТОЛЬКО по HTTPS
 CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=not DEBUG)
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://ultima-finance.org",
+    "https://www.ultima-finance.org",
+]
+
 
 # Application definition
 

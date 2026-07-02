@@ -29,6 +29,7 @@ services:
     restart: unless-stopped
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    command: tunnel run
     depends_on:
       - ultima_web
 
