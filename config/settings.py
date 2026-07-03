@@ -32,11 +32,7 @@ SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=not DEBUG)
 # Флаг указывает браузеру передавать CSRF-куку ТОЛЬКО по HTTPS
 CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=not DEBUG)
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://ultima-finance.org",
-    "https://www.ultima-finance.org",
-]
-
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 # Application definition
 
@@ -129,17 +125,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # MEDIA is user-create, hence, untrusted! Need NginX config and validation
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
-LOGIN_REDIRECT_URL = "home"
+LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "home"
 
 # 1. Какой бэкенд использовать.
@@ -164,7 +160,6 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
 EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
 
-LOGIN_REDIRECT_URL = "dashboard"
 
 # settings.py
 
@@ -216,6 +211,6 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/apple-touch-icon.*\.png$"),
     re.compile(r"^/favicon\.ico$"),
     re.compile(r"^/robots\.txt$"),
-    re.compile(r"\.(php|pl|py|sh|cgi |jsp|aspx)$"),
+    re.compile(r"\.(php|pl|py|sh|cgi|jsp|aspx)$"),
     re.compile(r"wp-admin"),
 ]
