@@ -2,26 +2,47 @@ services:
   ultima_db:
     image: postgres:17.10
     container_name: ultima_db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    expose:
-      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ultima_web:
+    init: true
     build: .
     container_name: ultima_web
+    restart: unless-stopped
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG:-False}
-    ports:
-      - "8000:8000"
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
     depends_on:
-      - ultima_db
+      ultima_db:
+        condition: service_healthy
+    volumes:
+      - static_volume:/app/staticfiles
+
+  ultima_nginx:
+    image: nginx:alpine
+    container_name: ultima_nginx
+    restart: unless-stopped
+    environment:
+      - DOMAINS=${DOMAINS}
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - static_volume:/app/staticfiles:ro 
+    depends_on:
+      - ultima_web
 
   ultima_tunnel:
     image: cloudflare/cloudflared:latest
@@ -31,7 +52,7 @@ services:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     command: tunnel run
     depends_on:
-      - ultima_web
+      - ultima_nginx
 
   ultima_backup:
     image: prodrigestivill/postgres-backup-local:17
@@ -43,12 +64,14 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_BACKUP_PRUNE_DAYSS=7
+      - POSTGRES_BACKUP_PRUNE_DAYS=7
       - SCHEDULE=@daily
     volumes:
       - ./backups:/backups
     depends_on:
-      - ultima_db
+      ultima_db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  static_volume:

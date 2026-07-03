@@ -1,10 +1,43 @@
+# === Python & Изоляция ===
 venv/
+.venv/
+env/
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# === Окружение и Секреты (Критично!) ===
+.env*
+!.env.example
+
+# === Специфика Docker ===
+docker-compose.override.yml
+.docker/
+
+# === Базы данных и Дампы ===
 *.sqlite3
 *.sql
-.env
-staticfiles/
-media/
+*.json
 fresh_dump.json
 backups/
-docker-compose.override.yml
+
+# === Статика и Медиа (Загрузки пользователей) ===
+staticfiles/
+media/
+
+# === Конфигурации веб-сервера ===
+*.conf
+*.template
+
+# === Временные файлы и Системный мусор ===
+*.log
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# === Старые архивы () ===
