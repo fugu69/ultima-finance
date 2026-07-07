@@ -62,12 +62,15 @@ class Presentation(models.Model):
         max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
     )
 
-    group_identifier = models.CharField(max_length=50)
+    group_identifier = models.CharField(max_length=50, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
 
+    def get_absolute_url(self):
+        return reverse("presentation_detail", kwargs={"pk": self.pk})
+
     def __str__(self) -> str:
-        return f"Group identifier: {self.group_identifier}, sales total {self.group_sales_total}, presenter {self.presenter}"
+        return f"Group identifier: {self.group_identifier}, sales total {self.group_sales_total}"
