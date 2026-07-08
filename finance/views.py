@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.forms import BaseModelForm
@@ -11,10 +12,9 @@ from django.views.generic import (
     DeleteView,
 )
 from django.db.models import Sum
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 
-
-from .models import Sale, Comment
+from .models import Sale, Comment, Presentation
 from .forms import CommentForm
 
 
@@ -30,32 +30,50 @@ class LandingPageView(TemplateView):
 
 
 class HomePageView(LoginRequiredMixin, ListView):
-    model = Sale
     template_name = "finance/home.html"
-    context_object_name = "sales"
+    # Меняем имя контекста на универсальное, так как внутри будут либо продажи, либо презентации
+    context_object_name = "items"
 
-    # Перехватываем стандартный запрос к БД и фильтруем его
     def get_queryset(self):
-        queryset = super().get_queryset()
-        # Из базы поднимутся только строки, где salesman — это тот, кто сейчас залогинен
-        return queryset.filter(salesman=self.request.user)
+        # 1. Ловим текущий таб из URL (по дефолту — sales)
+        self.active_tab = self.request.GET.get("tab", "sales")
+
+        if self.active_tab == "presentations":
+            # Возвращаем презентации текущего пользователя
+            return Presentation.objects.filter(presenter=self.request.user)
+
+        # Возвращаем продажи + лениво подгружаем комменты, чтобы не плодить N+1 запросы
+        return Sale.objects.filter(salesman=self.request.user).prefetch_related("comments")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # get_queryset() вернет данные для авторизованного пользователя
-        # aggregate() вернет словарь вида: {'sale_amount__sum': 15400.00}
-        # name__sum is name convention
-        total_sum = self.get_queryset().aggregate(Sum("sale_amount"))
-        context["total_sale_amount"] = total_sum["sale_amount__sum"] or 0
+        
+        # Передаем имя активного таба в шаблон, чтобы подсветить нужную кнопку
+        context["active_tab"] = self.active_tab
+
+        # 2. Считаем общую сумму в зависимости от выбранной вкладки
+        if self.active_tab == "presentations":
+            total_sum = self.get_queryset().aggregate(Sum("group_sales_total"))
+            context["total_amount"] = total_sum["group_sales_total__sum"] or Decimal("0.00")
+            context["currency_symbol"] = "฿"
+        else:
+            total_sum = self.get_queryset().aggregate(Sum("sale_amount"))
+            context["total_amount"] = total_sum["sale_amount__sum"] or Decimal("0.00")
+            context["currency_symbol"] = "฿"
 
         return context
 
+
+# ==========================================
+# CRUD ДЛЯ ПРОДАЖ (SALES)
+# ==========================================
 
 class SaleCreateView(LoginRequiredMixin, CreateView):
     model = Sale
     template_name = "finance/sale_create.html"
     fields = ["sale_amount", "payment_type"]
-    success_url = reverse_lazy("home")
+    # Актуализировано: шлём сразу на дашборд, минуя лендинг
+    success_url = reverse_lazy("dashboard")
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         form.instance.salesman = self.request.user
@@ -92,21 +110,19 @@ class SaleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Sale
     template_name = "finance/sale_update.html"
     fields = ["sale_amount", "payment_type"]
-    success_url = reverse_lazy("home")
 
     def test_func(self):
         obj = self.get_object()
         return obj.salesman == self.request.user
     
     def get_success_url(self):
-        # Смотрим, какой параметр прилетел в URL (?next=dashboard или ?next=detail)
         next_page = self.request.GET.get("next")
         
+        # Актуализировано: прямой редирект на дашборд без захода на хоум
         if next_page == "dashboard":
-            return reverse_lazy("dashboard")
+            return reverse("dashboard")
         
-        # По дефолту (или если пришли из карточки) возвращаем на детальный просмотр этой сделки
-        return reverse_lazy("sale_detail", kwargs={"pk": self.object.pk})
+        return reverse("sale_detail", kwargs={"pk": self.object.pk})
 
 
 class SaleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -117,12 +133,66 @@ class SaleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         obj = self.get_object()
         return obj.salesman == self.request.user
 
+    # Актуализировано: возвращаем сразу на дашборд
     def get_success_url(self):
-        # Если удалили из дашборда или карточки, возвращаем на дашборд
+        return reverse("dashboard")
+
+
+# ==========================================
+# CRUD ДЛЯ ПРЕЗЕНТАЦИЙ (PRESENTATIONS)
+# ==========================================
+
+class PresentationCreateView(LoginRequiredMixin, CreateView):
+    model = Presentation
+    template_name = "finance/presentation_create.html"
+    fields = ["group_sales_total", "group_identifier"]
+
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        # Автоматически назначаем текущего юзера спикером презентации
+        form.instance.presenter = self.request.user
+        return super().form_valid(form)
+
+    # Актуализировано: возвращаем на дашборд с параметром вкладки презентаций
+    def get_success_url(self):
+        return f"{reverse('dashboard')}?tab=presentations"
+
+
+class PresentationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Presentation
+    template_name = "finance/presentation_detail.html"
+
+    def test_func(self):
+        # Проверяем, что эту презентацию создал именно этот юзер
+        obj = self.get_object()
+        return obj.presenter == self.request.user
+
+
+class PresentationUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Presentation
+    template_name = "finance/presentation_update.html"
+    fields = ["group_sales_total", "group_identifier"]
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.presenter == self.request.user
+
+    # Актуализировано: исправлена f-строка, параметры ведут на дашборд
+    def get_success_url(self):
         next_page = self.request.GET.get("next")
-        
         if next_page == "dashboard":
-            return reverse_lazy("dashboard")
-            
-        # По дефолту после удаления сделки тоже отправляем на дашборд
-        return reverse_lazy("dashboard")
+            return f"{reverse('dashboard')}?tab=presentations"
+        
+        return reverse("presentation_detail", kwargs={"pk": self.object.pk})
+
+
+class PresentationDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Presentation
+    template_name = "finance/presentation_delete.html"
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.presenter == self.request.user
+
+    # Актуализировано: исправлена f-строка, удаление возвращает на вкладку презентаций дашборда
+    def get_success_url(self):
+        return f"{reverse('dashboard')}?tab=presentations"

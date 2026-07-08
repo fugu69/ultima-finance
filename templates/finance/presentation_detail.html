@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-[800px] mx-auto px-4 py-8">
+
+    <div class="mb-6">
+        <a href="{% url 'dashboard' %}?tab=presentations" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Назад к презентациям
+        </a>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-6 mb-6 gap-4">
+            <div>
+                <h1 class="text-2xl font-extrabold text-gray-950 tracking-tight">
+                    {% if presentation.group_identifier %}
+                        Группа: {{ presentation.group_identifier }}
+                    {% else %}
+                        <span class="text-gray-400 font-normal">Без идентификатора</span>
+                    {% endif %}
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    Детальный отчет о проведенной презентации
+                </p>
+            </div>
+            
+            <div class="bg-gray-50 border border-gray-100 rounded-xl px-5 py-3 text-sm sm:text-right self-start sm:self-auto">
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider block">Сумма продаж группы</span>
+                <span class="text-2xl font-black text-gray-950 whitespace-nowrap">{{ presentation.group_sales_total }} ฿</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-8">
+            <div class="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Спикер / Презентатор</span>
+                <span class="font-semibold text-gray-900 mt-1 block text-base">{{ presentation.presenter.username }}</span>
+            </div>
+            
+            <div class="bg-gray-50 border border-gray-100 rounded-xl p-4">
+                <span class="text-gray-400 block text-xs font-medium uppercase tracking-wider">Дата проведения</span>
+                <span class="font-semibold text-gray-900 mt-1 block text-base">{{ presentation.created_at|date:"d E Y в H:i" }}</span>
+            </div>
+        </div>
+
+        <div class="pt-6 border-t border-gray-100 flex items-center justify-end gap-3 text-sm font-medium">
+            <a href="{% url 'presentation_update' presentation.id %}?next=detail" 
+               class="text-gray-600 hover:text-gray-950 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition duration-150">
+                Редактировать
+            </a>
+            
+            <a href="{% url 'presentation_delete' presentation.id %}?next=detail" 
+               class="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 px-4 py-2.5 rounded-xl border border-red-100 transition duration-150">
+                Удалить презентацию
+            </a>
+        </div>
+        
+    </div>
+
+</div>
+{% endblock content %}

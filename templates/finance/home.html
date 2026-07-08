@@ -14,67 +14,129 @@
         </div>
         
         <div class="mt-4 md:mt-0 bg-gray-50 border border-gray-200 rounded-xl px-5 py-3">
-            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider block">Общая сумма сделок</span>
-            <span class="text-2xl font-bold text-gray-900">{{ total_sale_amount|floatformat:2 }} ฿</span>
+            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider block">
+                {% if active_tab == 'presentations' %}Общая сумма групп{% else %}Общая сумма сделок{% endif %}
+            </span>
+            <span class="text-2xl font-bold text-gray-900">{{ total_amount|floatformat:2 }} {{ currency_symbol }}</span>
         </div>
     </div>
 
-    <div class="mb-6">
-        <a href="{% url 'sale_create' %}" 
-           class="inline-flex items-center justify-center bg-gray-950 hover:bg-gray-800 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition duration-150 ease-in-out">
-            + Добавить продажу
+    <div class="flex space-x-2 p-1 bg-gray-100 rounded-xl max-w-xs mx-auto mb-6">
+        <a href="?tab=sales" 
+           class="flex-1 text-center py-2 px-4 rounded-lg text-sm font-medium transition duration-150 {% if active_tab != 'presentations' %}bg-white text-gray-900 shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+            Продажи
+        </a>
+        <a href="?tab=presentations" 
+           class="flex-1 text-center py-2 px-4 rounded-lg text-sm font-medium transition duration-150 {% if active_tab == 'presentations' %}bg-white text-gray-900 shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+            Презентации
         </a>
     </div>
 
+    <div class="mb-6">
+        {% if active_tab == 'presentations' %}
+            <a href="{% url 'presentation_create' %}" 
+               class="inline-flex items-center justify-center bg-gray-950 hover:bg-gray-800 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition duration-150 ease-in-out">
+                + Добавить презентацию
+            </a>
+        {% else %}
+            <a href="{% url 'sale_create' %}" 
+               class="inline-flex items-center justify-center bg-gray-950 hover:bg-gray-800 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition duration-150 ease-in-out">
+                + Добавить продажу
+            </a>
+        {% endif %}
+    </div>
+
     <div class="overflow-x-auto bg-white border border-gray-200 rounded-xl shadow-sm">
-        <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-            <thead class="bg-gray-50 text-xs text-gray-500 uppercase font-medium">
-                <tr>
-                    <th class="px-6 py-4">Сумма</th>
-                    <th class="px-6 py-4">Тип оплаты</th>
-                    <th class="px-6 py-4">Дата</th>
-                    <th class="px-6 py-4">Последний комментарий</th>
-                    <th class="px-6 py-4 text-right">Действия</th>
-                </tr>
-            </thead>
-            
-            <tbody class="divide-y divide-gray-200 bg-white">
-                {% for sale in sales %}
-                <tr class="hover:bg-gray-50 transition duration-100">
-                    <td class="px-6 py-4 font-semibold text-gray-900">
-                        <a href="{{ sale.get_absolute_url }}" class="hover:text-blue-600 hover:underline">
-                            {{ sale.sale_amount }} ฿
-                        </a>
-                    </td>
-                    <td class="px-6 py-4 text-gray-600">
-                        {{ sale.get_payment_type_display }}
-                    </td>
-                    <td class="px-6 py-4 text-gray-500">
-                        {{ sale.created_at|date:"d E Y" }}
-                    </td>
-                    <td class="px-6 py-4 text-gray-600 max-w-xs truncate">
-                        {% if sale.comment_set.exists %}
-                            <span class="text-gray-700">
-                                {{ sale.comment_set.last.comment }}
-                            </span>
-                        {% else %}
-                            <span class="text-gray-300">—</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">
-                        <a href="{% url 'sale_update' sale.id %}?next=dashboard" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Update</a>
-                        <a href="{% url 'sale_delete' sale.id %}?next=dashboard" class="text-red-600 hover:text-red-800 font-medium hover:underline">Delete</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-12 text-gray-400 font-medium">
-                        У вас пока нет зарегистрированных продаж.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        {% if active_tab == 'presentations' %}
+            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+                <thead class="bg-gray-50 text-xs text-gray-500 uppercase font-medium">
+                    <tr>
+                        <th class="px-6 py-4">Сумма продаж группы</th>
+                        <th class="px-6 py-4">Идентификатор группы</th>
+                        <th class="px-6 py-4">Дата проведения</th>
+                        <th class="px-6 py-4 text-right">Действия</th>
+                    </tr>
+                </thead>
+                
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for presentation in items %}
+                    <tr class="hover:bg-gray-50 transition duration-100">
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                            <a href="{{ presentation.get_absolute_url }}" class="hover:text-blue-600 hover:underline">
+                                {{ presentation.group_sales_total }} ฿
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 font-medium">
+                            {{ presentation.group_identifier|default:"Без идентификатора" }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">
+                            {{ presentation.created_at|date:"d E Y" }}
+                        </td>
+                        <td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">
+                            <a href="{% url 'presentation_update' presentation.id %}?next=dashboard" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Update</a>
+                            <a href="{% url 'presentation_delete' presentation.id %}?next=dashboard" class="text-red-600 hover:text-red-800 font-medium hover:underline">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-12 text-gray-400 font-medium">
+                            У вас пока нет зарегистрированных презентаций.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% else %}
+            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+                <thead class="bg-gray-50 text-xs text-gray-500 uppercase font-medium">
+                    <tr>
+                        <th class="px-6 py-4">Сумма</th>
+                        <th class="px-6 py-4">Тип оплаты</th>
+                        <th class="px-6 py-4">Дата</th>
+                        <th class="px-6 py-4">Последний комментарий</th>
+                        <th class="px-6 py-4 text-right">Действия</th>
+                    </tr>
+                </thead>
+                
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for sale in items %}
+                    <tr class="hover:bg-gray-50 transition duration-100">
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                            <a href="{{ sale.get_absolute_url }}" class="hover:text-blue-600 hover:underline">
+                                {{ sale.sale_amount }} ฿
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">
+                            {{ sale.get_payment_type_display }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">
+                            {{ sale.created_at|date:"d E Y" }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 max-w-xs truncate">
+                            {% if sale.comments.exists %}
+                                <span class="text-gray-700">
+                                    {{ sale.comments.last.comment }}
+                                </span>
+                            {% else %}
+                                <span class="text-gray-300">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">
+                            <a href="{% url 'sale_update' sale.id %}?next=dashboard" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Update</a>
+                            <a href="{% url 'sale_delete' sale.id %}?next=dashboard" class="text-red-600 hover:text-red-800 font-medium hover:underline">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-12 text-gray-400 font-medium">
+                            У вас пока нет зарегистрированных продаж.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
     </div>
 
 </div>
