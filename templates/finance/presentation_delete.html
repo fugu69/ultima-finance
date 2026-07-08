@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-[1200px] mx-auto px-4 py-12 flex justify-center">
+
+    <div class="max-w-md w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+        
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4 border border-red-100">
+            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+        </div>
+
+        <h1 class="text-xl font-extrabold text-gray-950 tracking-tight mb-2">
+            Удалить презентацию?
+        </h1>
+        
+        <p class="text-sm text-gray-500 mb-8 leading-relaxed">
+            Вы уверены, что хотите безвозвратно удалить презентацию 
+            {% if presentation.group_identifier %}
+                группы <span class="font-semibold text-gray-900">«{{ presentation.group_identifier }}»</span>
+            {% endif %}
+            на сумму 
+            <span class="font-semibold text-gray-900 whitespace-nowrap">{{ presentation.group_sales_total }} ฿</span> 
+            от <span class="font-semibold text-gray-900 whitespace-nowrap">{{ presentation.created_at|date:"d E Y" }}</span>? 
+            Это действие нельзя будет отменить.
+        </p>
+
+        <form action="?{{ request.GET.urlencode }}" method="post">
+            {% csrf_token %}
+            
+            <div class="flex flex-col sm:flex-row-reverse items-center justify-center gap-3">
+                <button type="submit" 
+                        class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-medium text-sm py-2.5 px-6 rounded-xl transition duration-150 ease-in-out cursor-pointer shadow-sm">
+                    Подтвердить удаление
+                </button>
+                
+                {% if request.GET.next == 'dashboard' %}
+                    <a href="{% url 'dashboard' %}?tab=presentations" 
+                       class="w-full sm:w-auto inline-flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-sm py-2.5 px-6 rounded-xl border border-gray-200 transition duration-150">
+                        Отмена
+                    </a>
+                {% else %}
+                    <a href="{% url 'presentation_detail' presentation.id %}" 
+                       class="w-full sm:w-auto inline-flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-sm py-2.5 px-6 rounded-xl border border-gray-200 transition duration-150">
+                        Отмена
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+        
+    </div>
+
+</div>
+{% endblock content %}

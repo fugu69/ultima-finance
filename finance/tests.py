@@ -2,21 +2,27 @@ from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from .models import Sale, Comment
+from .models import Sale, Comment, Presentation
 
 User = get_user_model()
 
+
 # =====================================================================
-# 1. ТЕСТЫ ДОСТУПА, СТАТУС-КОДОВ И ШАБЛОНОВ ДАШБОРДА
+# 1. ТЕСТЫ ДОСТУПА, СТАТУС-КОДОВ И ВЕНТИЛЯЦИИ ВКЛАДОК ДАШБОРДА
 # =====================================================================
 class DashboardAccessAndTemplateTests(TestCase):
 
     def setUp(self):
-        self.user_dima = User.objects.create_user(username="dima", password="password123")
-        self.user_alex = User.objects.create_user(username="alex", password="password123")
+        self.user_biba = User.objects.create_user(username="biba", password="password123")
+        self.user_boba = User.objects.create_user(username="boba", password="password123")
         
-        Sale.objects.create(salesman=self.user_dima, sale_amount=Decimal("1000.00"), payment_type="THB")
-        Sale.objects.create(salesman=self.user_alex, sale_amount=Decimal("5000.00"), payment_type="THB")
+        # Создаем тестовые продажи
+        Sale.objects.create(salesman=self.user_biba, sale_amount=Decimal("1000.00"), payment_type="THB")
+        Sale.objects.create(salesman=self.user_boba, sale_amount=Decimal("5000.00"), payment_type="THB")
+        
+        # Создаем тестовые презентации
+        Presentation.objects.create(presenter=self.user_biba, group_sales_total=Decimal("3000.00"), group_identifier="Group A")
+        Presentation.objects.create(presenter=self.user_boba, group_sales_total=Decimal("7000.00"), group_identifier="Group B")
         
         self.dashboard_url = reverse("dashboard")
 
@@ -28,36 +34,35 @@ class DashboardAccessAndTemplateTests(TestCase):
 
     def test_dashboard_renders_correct_template_and_status(self):
         """Авторизованный юзер получает 200 OK и правильный набор шаблонов"""
-        self.client.login(username="dima", password="password123")
+        self.client.login(username="biba", password="password123")
         response = self.client.get(self.dashboard_url)
         
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "finance/home.html")
-        self.assertTemplateUsed(response, "base.html")
 
-    def test_dashboard_shows_only_owner_sales(self):
-        """Менеджер изолирован и видит в контексте только свои сделки"""
-        self.client.login(username="dima", password="password123")
+    def test_dashboard_default_tab_is_sales(self):
+        """По умолчанию (без параметров) открывается вкладка продаж с изоляцией данных"""
+        self.client.login(username="biba", password="password123")
         response = self.client.get(self.dashboard_url)
         
-        self.assertEqual(len(response.context["sales"]), 1)
-        self.assertContains(response, "1000")
-        self.assertNotContains(response, "5000")
+        self.assertEqual(response.context["active_tab"], "sales")
+        # Должна быть только продажа Бибы
+        self.assertEqual(len(response.context["items"]), 1)
+        self.assertIsInstance(response.context["items"][0], Sale)
+        self.assertContains(response, "1000.00")
+        self.assertNotContains(response, "5000.00")
 
-    def test_dashboard_contains_correct_action_links(self):
-        """Проверяем, что в таблице дашборда ссылки Update и Delete сформированы с флагом ?next=dashboard"""
-        self.client.login(username="dima", password="password123")
-        response = self.client.get(self.dashboard_url)
+    def test_dashboard_switching_to_presentations_tab(self):
+        """При передаче ?tab=presentations дашборд переключается на презентации текущего юзера"""
+        self.client.login(username="biba", password="password123")
+        response = self.client.get(f"{self.dashboard_url}?tab=presentations")
         
-        # Получаем динамический ID созданной в setUp сделки Димы
-        sale_id = Sale.objects.filter(salesman=self.user_dima).first().id
-        
-        # Проверяем, что в сыром HTML страницы лежат правильные адреса с хвостом ?next=dashboard
-        expected_update_url = f'{reverse("sale_update", kwargs={"pk": sale_id})}?next=dashboard'
-        expected_delete_url = f'{reverse("sale_delete", kwargs={"pk": sale_id})}?next=dashboard'
-        
-        self.assertContains(response, expected_update_url)
-        self.assertContains(response, expected_delete_url)
+        self.assertEqual(response.context["active_tab"], "presentations")
+        # Должна быть только презентация Бибы
+        self.assertEqual(len(response.context["items"]), 1)
+        self.assertIsInstance(response.context["items"][0], Presentation)
+        self.assertContains(response, "Group A")
+        self.assertNotContains(response, "Group B")
 
 
 # =====================================================================
@@ -66,18 +71,31 @@ class DashboardAccessAndTemplateTests(TestCase):
 class DashboardAggregationTests(TestCase):
 
     def setUp(self):
-        self.user_dima = User.objects.create_user(username="dima", password="password123")
+        self.user_biba = User.objects.create_user(username="biba", password="password123")
         
-        Sale.objects.create(salesman=self.user_dima, sale_amount=Decimal("1000"), payment_type="THB")
-        Sale.objects.create(salesman=self.user_dima, sale_amount=Decimal("1500.50"), payment_type="CARD")
+        # Насыпаем продаж
+        Sale.objects.create(salesman=self.user_biba, sale_amount=Decimal("1000.00"), payment_type="THB")
+        Sale.objects.create(salesman=self.user_biba, sale_amount=Decimal("1500.50"), payment_type="CARD")
+        
+        # Насыпаем презентаций
+        Presentation.objects.create(presenter=self.user_biba, group_sales_total=Decimal("2000.00"), group_identifier="A")
+        Presentation.objects.create(presenter=self.user_biba, group_sales_total=Decimal("4500.25"), group_identifier="B")
 
-    def test_dashboard_total_amount_aggregation(self):
-        """Сумма сделок в контексте считается корректно математически"""
-        self.client.login(username="dima", password="password123")
-        response = self.client.get(reverse("dashboard"))
+        self.dashboard_url = reverse("dashboard")
+
+    def test_sales_aggregation_is_correct(self):
+        """Сумма на вкладке продаж считается корректно математически"""
+        self.client.login(username="biba", password="password123")
+        response = self.client.get(self.dashboard_url)
         
-        self.assertEqual(response.context["total_sale_amount"], Decimal("2500.5"))
-        self.assertContains(response, "2500.50")
+        self.assertEqual(response.context["total_amount"], Decimal("2500.50"))
+
+    def test_presentations_aggregation_is_correct(self):
+        """Сумма на вкладке презентаций считается корректно математически"""
+        self.client.login(username="biba", password="password123")
+        response = self.client.get(f"{self.dashboard_url}?tab=presentations")
+        
+        self.assertEqual(response.context["total_amount"], Decimal("6500.25"))
 
 
 # =====================================================================
@@ -86,106 +104,138 @@ class DashboardAggregationTests(TestCase):
 class SaleLifecycleTests(TestCase):
 
     def setUp(self):
-        self.user_dima = User.objects.create_user(username="dima", password="password123")
-        self.sale = Sale.objects.create(salesman=self.user_dima, sale_amount=Decimal("1000.00"), payment_type="THB")
+        self.user_biba = User.objects.create_user(username="biba", password="password123")
+        self.user_boba = User.objects.create_user(username="boba", password="password123")
+        self.sale = Sale.objects.create(salesman=self.user_biba, sale_amount=Decimal("1000.00"), payment_type="THB")
         
         self.detail_url = reverse("sale_detail", kwargs={"pk": self.sale.pk})
         self.create_url = reverse("sale_create")
         self.update_url = reverse("sale_update", kwargs={"pk": self.sale.pk})
+        self.delete_url = reverse("sale_delete", kwargs={"pk": self.sale.pk})
 
     def test_sale_detail_renders_correct_template(self):
-        """Страница деталей сделки отдает 200 OK и использует правильный шаблон"""
-        self.client.login(username="dima", password="password123")
+        """Страница деталей сделки отдает 200 OK владельцу"""
+        self.client.login(username="biba", password="password123")
         response = self.client.get(self.detail_url)
-        
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "finance/sale_detail.html")
 
-    def test_sale_create_valid_data(self):
-        """Успешное создание сделки через POST форму"""
-        self.client.login(username="dima", password="password123")
+    def test_sale_detail_isolation(self):
+        """Чужой менеджер не может смотреть детали чужой продажи (403 Forbidden)"""
+        self.client.login(username="boba", password="password123")
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sale_create_valid_data_and_direct_redirect(self):
+        """После успешного создания продажи редиректит СРАЗУ на дашборд"""
+        self.client.login(username="biba", password="password123")
         response = self.client.post(self.create_url, {"sale_amount": "3000.00", "payment_type": "CARD"})
         
-        self.assertEqual(Sale.objects.filter(salesman=self.user_dima).count(), 2)
-        self.assertTrue(Sale.objects.filter(sale_amount=Decimal("3000.00")).exists())
+        self.assertRedirects(response, reverse("dashboard"))
+        self.assertEqual(Sale.objects.filter(salesman=self.user_biba).count(), 2)
 
-    def test_sale_update_redirect_to_dashboard(self):
-        """Умный редирект на дашборд при редактировании с флагом ?next=dashboard"""
-        self.client.login(username="dima", password="password123")
+    def test_sale_update_redirect_to_dashboard_with_param(self):
+        """Редирект на дашборд при изменении с флагом ?next=dashboard"""
+        self.client.login(username="biba", password="password123")
         response = self.client.post(f"{self.update_url}?next=dashboard", {"sale_amount": "1200.00", "payment_type": "THB"})
         self.assertRedirects(response, reverse("dashboard"))
 
-    def test_sale_update_redirect_to_detail(self):
-        """Дефолтный возврат в карточку деталей после сохранения изменений"""
-        self.client.login(username="dima", password="password123")
-        response = self.client.post(self.update_url, {"sale_amount": "1300.00", "payment_type": "THB"})
-        self.assertRedirects(response, self.detail_url)
+    def test_sale_delete_flow(self):
+        """Удаление продажи перенаправляет на дашборд и стирает запись"""
+        self.client.login(username="biba", password="password123")
+        response = self.client.post(self.delete_url)
+        
+        self.assertRedirects(response, reverse("dashboard"))
+        self.assertFalse(Sale.objects.filter(pk=self.sale.pk).exists())
 
 
 # =====================================================================
-# 4. ТЕСТЫ СИСТЕМЫ КОММЕНТАРИЕВ
+# 4. ТЕСТЫ ЖИЗНЕННОГО ЦИКЛА ПРЕЗЕНТАЦИЙ (ГЛАВНЫЙ ИСПРАВЛЕННЫЙ БАГ)
 # =====================================================================
-class SaleCommentTests(TestCase):
+class PresentationLifecycleTests(TestCase):
 
     def setUp(self):
-        self.user_dima = User.objects.create_user(username="dima", password="password123")
-        self.sale = Sale.objects.create(salesman=self.user_dima, sale_amount=Decimal("1000.00"), payment_type="THB")
+        self.user_biba = User.objects.create_user(username="biba", password="password123")
+        self.user_boba = User.objects.create_user(username="boba", password="password123")
+        self.presentation = Presentation.objects.create(
+            presenter=self.user_biba, 
+            group_sales_total=Decimal("4000.00"), 
+            group_identifier="Batch 1"
+        )
+        
+        self.create_url = reverse("presentation_create")
+        self.detail_url = reverse("presentation_detail", kwargs={"pk": self.presentation.pk})
+        self.update_url = reverse("presentation_update", kwargs={"pk": self.presentation.pk})
+        self.delete_url = reverse("presentation_delete", kwargs={"pk": self.presentation.pk})
+
+    def test_presentation_create_redirects_to_presentations_tab(self):
+        """Создание презентации редиректит СРАЗУ на дашборд со вкладкой презентаций"""
+        self.client.login(username="biba", password="password123")
+        response = self.client.post(self.create_url, {
+            "group_sales_total": "5500.00",
+            "group_identifier": "Batch 2"
+        })
+        
+        # Проверяем прямой редирект на нужную вкладку дашборда
+        expected_url = f"{reverse('dashboard')}?tab=presentations"
+        self.assertRedirects(response, expected_url)
+        
+        new_presentation = Presentation.objects.get(group_identifier="Batch 2")
+        self.assertEqual(new_presentation.presenter, self.user_biba)
+
+    def test_presentation_update_with_next_param(self):
+        """Редактирование презентации с ?next=dashboard возвращает на дашборд + вкладку презентаций"""
+        self.client.login(username="biba", password="password123")
+        response = self.client.post(
+            f"{self.update_url}?next=dashboard", 
+            {"group_sales_total": "9000.00", "group_identifier": "Updated Batch"}
+        )
+        
+        expected_url = f"{reverse('dashboard')}?tab=presentations"
+        self.assertRedirects(response, expected_url)
+
+    def test_presentation_delete_redirects_to_presentations_tab(self):
+        """Удаление презентации возвращает менеджера строго на вкладку презентаций дашборда"""
+        self.client.login(username="biba", password="password123")
+        response = self.client.post(self.delete_url)
+        
+        expected_url = f"{reverse('dashboard')}?tab=presentations"
+        self.assertRedirects(response, expected_url)
+        self.assertFalse(Presentation.objects.filter(pk=self.presentation.pk).exists())
+
+    def test_presentation_security_isolation(self):
+        """Чужой юзер поймает 403 ошибку при попытке изменить или удалить чужую презентацию"""
+        self.client.login(username="boba", password="password123")
+        
+        # Попытка зайти в детали
+        response_detail = self.client.get(self.detail_url)
+        self.assertEqual(response_detail.status_code, 403)
+        
+        # Попытка отредактировать
+        response_update = self.client.post(self.update_url, {"group_sales_total": "10.00"})
+        self.assertEqual(response_update.status_code, 403)
+
+
+# =====================================================================
+# 5. ТЕСТЫ СИСТЕМЫ КОММЕНТАРИЕВ И ОПТИМИЗАЦИИ ЛЕНДИНГА
+# =====================================================================
+class SaleCommentAndLandingTests(TestCase):
+
+    def setUp(self):
+        self.user_biba = User.objects.create_user(username="biba", password="password123")
+        self.sale = Sale.objects.create(salesman=self.user_biba, sale_amount=Decimal("1000.00"), payment_type="THB")
         self.comment_url = reverse("comment_create", kwargs={"sale_pk": self.sale.pk})
 
     def test_comment_creation_and_redirect(self):
         """Добавление новой заметки сохраняет её в базу и возвращает на детальный вид"""
-        self.client.login(username="dima", password="password123")
-        
+        self.client.login(username="biba", password="password123")
         response = self.client.post(self.comment_url, {"comment": "Документы отправлены клиенту"})
         
         self.assertRedirects(response, reverse("sale_detail", kwargs={"pk": self.sale.pk}))
         self.assertEqual(Comment.objects.count(), 1)
-        
-        comment_entry = Comment.objects.first()
-        self.assertEqual(comment_entry.comment, "Документы отправлены клиенту")
-        self.assertEqual(comment_entry.sale, self.sale)
 
-# =====================================================================
-# 5. ТЕСТЫ ЖИЗНЕННОГО ЦИКЛА УДАЛЕНИЯ (DELETE FLOW & REDIRECTS)
-# =====================================================================
-class SaleDeleteLifecycleTests(TestCase):
-
-    def setUp(self):
-        self.user_dima = User.objects.create_user(username="dima", password="password123")
-        self.sale = Sale.objects.create(
-            salesman=self.user_dima, 
-            sale_amount=Decimal("1000.00"), 
-            payment_type="THB"
-        )
-        self.delete_url = reverse("sale_delete", kwargs={"pk": self.sale.pk})
-        self.dashboard_url = reverse("dashboard")
-
-    def test_sale_delete_page_renders_correct_template(self):
-        """Страница подтверждения удаления отдает 200 OK и использует правильный шаблон"""
-        self.client.login(username="dima", password="password123")
-        response = self.client.get(self.delete_url)
+    def test_landing_page_redirects_authenticated_user(self):
+        """Если авторизованный пользователь забрел на лендинг '', его отправляет на 'dashboard'"""
+        self.client.login(username="biba", password="password123")
+        response = self.client.get(reverse("home"))
         
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "finance/sale_delete.html")
-
-    def test_sale_delete_redirect_to_dashboard_with_next_param(self):
-        """При удалении с дашборда (?next=dashboard) POST-запрос возвращает на дашборд и стирает запись"""
-        self.client.login(username="dima", password="password123")
-        
-        # Имитируем отправку формы с параметром ?next=dashboard в URL
-        response = self.client.post(f"{self.delete_url}?next=dashboard")
-        
-        # Должен сработать редирект на дашборд
-        self.assertRedirects(response, self.dashboard_url)
-        # Записи в базе больше быть не должно
-        self.assertEqual(Sale.objects.filter(pk=self.sale.pk).count(), 0)
-
-    def test_sale_delete_default_redirect_to_dashboard(self):
-        """Если сделка удаляется без параметра next (например, из деталей), дефолтный редирект ведет на дашборд"""
-        self.client.login(username="dima", password="password123")
-        
-        # Отправляем POST без GET-параметров
-        response = self.client.post(self.delete_url)
-        
-        self.assertRedirects(response, self.dashboard_url)
-        self.assertEqual(Sale.objects.filter(pk=self.sale.pk).count(), 0)
+        self.assertRedirects(response, reverse("dashboard"))

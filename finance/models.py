@@ -15,7 +15,7 @@ class Sale(models.Model):
 
     # max_digits include decimal_places, so choose wisely
     sale_amount = models.DecimalField(
-        max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+        max_digits=14, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
     )
     payment_type = models.CharField(
         max_length=4,
@@ -40,7 +40,7 @@ class Sale(models.Model):
 
 
 class Comment(models.Model):
-    sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="comments")
     comment = models.CharField(max_length=140)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments"
@@ -59,7 +59,7 @@ class Presentation(models.Model):
     )
 
     group_sales_total = models.DecimalField(
-        max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+        max_digits=14, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
     )
 
     group_identifier = models.CharField(max_length=50, blank=True, null=True)
