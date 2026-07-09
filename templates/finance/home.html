@@ -139,5 +139,117 @@
         {% endif %}
     </div>
 
+    {% if is_paginated %}
+    <div class="flex items-center justify-between border border-gray-200 bg-white px-4 py-4 sm:px-6 mt-4 rounded-xl shadow-sm">
+        
+        <div class="flex flex-1 justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+                <a href="?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" 
+                   class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    Назад
+                </a>
+            {% else %}
+                <span class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed">
+                    Назад
+                </span>
+            {% endif %}
+            
+            {% if page_obj.has_next %}
+                <a href="?tab={{ active_tab }}&page={{ page_obj.next_page_number }}" 
+                   class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    Вперед
+                </a>
+            {% else %}
+                <span class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed">
+                    Вперед
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="hidden sm:grid sm:grid-cols-3 sm:items-center w-full">
+            <div class="text-left">
+                <p class="text-sm text-gray-700">
+                    Показаны с <span class="font-semibold text-gray-900">{{ page_obj.start_index }}</span> 
+                    по <span class="font-semibold text-gray-900">{{ page_obj.end_index }}</span> 
+                    из <span class="font-semibold text-gray-900">{{ paginator.count }}</span>
+                    записей 
+                </p>
+            </div>
+            
+            <div class="flex justify-center">
+                <nav class="isolate inline-flex -space-x-px rounded-xl shadow-sm bg-gray-100 p-1 border border-gray-200 items-center" aria-label="Pagination">
+                    
+                    {% if page_obj.has_previous %}
+                        <a href="?tab={{ active_tab }}&page=1" 
+                           class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition" title="В самое начало">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm4.5 0a.75.75 0 0 1 0 1.06L12.56 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        <a href="?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" 
+                           class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% else %}
+                        <span class="inline-flex items-center rounded-lg px-2 py-2 text-gray-300 cursor-not-allowed">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm4.5 0a.75.75 0 0 1 0 1.06L12.56 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <span class="inline-flex items-center rounded-lg px-2 py-2 text-gray-300 cursor-not-allowed">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                    {% endif %}
+
+                    {% for num in paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="inline-flex items-center bg-white px-3.5 py-2 text-sm font-bold text-gray-900 rounded-lg shadow-sm border border-gray-200/50">
+                                {{ num }}
+                            </span>
+                        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                            <a href="?tab={{ active_tab }}&page={{ num }}" 
+                               class="inline-flex items-center px-3.5 py-2 text-sm font-medium text-gray-500 rounded-lg hover:bg-white hover:text-gray-900 transition">
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?tab={{ active_tab }}&page={{ page_obj.next_page_number }}" 
+                           class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        <a href="?tab={{ active_tab }}&page={{ paginator.num_pages }}" 
+                           class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition" title="В самый конец">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Zm-4.5 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L7.44 10 3.72 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% else %}
+                        <span class="inline-flex items-center rounded-lg px-2 py-2 text-gray-300 cursor-not-allowed">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <span class="inline-flex items-center rounded-lg px-2 py-2 text-gray-300 cursor-not-allowed">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Zm-4.5 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L7.44 10 3.72 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                    {% endif %}
+                </nav>
+            </div>
+            
+            <div></div>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock content %}

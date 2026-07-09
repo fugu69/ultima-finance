@@ -31,8 +31,8 @@ class LandingPageView(TemplateView):
 
 class HomePageView(LoginRequiredMixin, ListView):
     template_name = "finance/home.html"
-    # Меняем имя контекста на универсальное, так как внутри будут либо продажи, либо презентации
     context_object_name = "items"
+    paginate_by = 5
 
     def get_queryset(self):
         # 1. Ловим текущий таб из URL (по дефолту — sales)
