@@ -32,7 +32,7 @@ class LandingPageView(TemplateView):
 class HomePageView(LoginRequiredMixin, ListView):
     template_name = "finance/home.html"
     context_object_name = "items"
-    paginate_by = 5
+    paginate_by = 50
 
     def get_queryset(self):
         # 1. Ловим текущий таб из URL (по дефолту — sales)
