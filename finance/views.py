@@ -12,6 +12,7 @@ from django.views.generic import (
     DeleteView,
 )
 from django.db.models import Sum
+from django.utils import timezone
 from django.urls import reverse, reverse_lazy
 
 from .models import Sale, Comment, Presentation
@@ -43,30 +44,43 @@ class HomePageView(LoginRequiredMixin, ListView):
             return Presentation.objects.filter(presenter=self.request.user)
 
         # Возвращаем продажи + лениво подгружаем комменты, чтобы не плодить N+1 запросы
-        return Sale.objects.filter(salesman=self.request.user).prefetch_related("comments")
+        return Sale.objects.filter(salesman=self.request.user).prefetch_related(
+            "comments"
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Передаем имя активного таба в шаблон, чтобы подсветить нужную кнопку
         context["active_tab"] = self.active_tab
 
-        # 2. Считаем общую сумму в зависимости от выбранной вкладки
-        if self.active_tab == "presentations":
-            total_sum = self.get_queryset().aggregate(Sum("group_sales_total"))
-            context["total_amount"] = total_sum["group_sales_total__sum"] or Decimal("0.00")
-            context["currency_symbol"] = "฿"
-        else:
-            total_sum = self.get_queryset().aggregate(Sum("sale_amount"))
-            context["total_amount"] = total_sum["sale_amount__sum"] or Decimal("0.00")
-            context["currency_symbol"] = "฿"
+        # Считаем сумму за месяц отдельным точечным запросом в базу
+        context["total_amount"] = self._get_current_month_total()
+        context["currency_symbol"] = "฿"
 
         return context
+    
+
+    def _get_current_month_total(self):
+        today = timezone.now().date()
+        start_of_month = today.replace(day=1)
+        # 2. Считаем общую сумму в зависимости от выбранной вкладки
+        if self.active_tab == "presentations":
+            return Presentation.objects.filter(
+                presenter=self.request.user,
+                created_at__date__range=[start_of_month, today]
+            ).aggregate(total=Sum("group_sales_total"))["total"] or Decimal("0.00")
+
+        return Sale.objects.filter(
+            salesman=self.request.user,
+            created_at__date__range=[start_of_month, today]
+        ).aggregate(total=Sum("sale_amount"))["total"] or Decimal("0.00")
 
 
 # ==========================================
 # CRUD ДЛЯ ПРОДАЖ (SALES)
 # ==========================================
+
 
 class SaleCreateView(LoginRequiredMixin, CreateView):
     model = Sale
@@ -114,14 +128,14 @@ class SaleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         obj = self.get_object()
         return obj.salesman == self.request.user
-    
+
     def get_success_url(self):
         next_page = self.request.GET.get("next")
-        
+
         # Актуализировано: прямой редирект на дашборд без захода на хоум
         if next_page == "dashboard":
             return reverse("dashboard")
-        
+
         return reverse("sale_detail", kwargs={"pk": self.object.pk})
 
 
@@ -141,6 +155,7 @@ class SaleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 # ==========================================
 # CRUD ДЛЯ ПРЕЗЕНТАЦИЙ (PRESENTATIONS)
 # ==========================================
+
 
 class PresentationCreateView(LoginRequiredMixin, CreateView):
     model = Presentation
@@ -181,7 +196,7 @@ class PresentationUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
         next_page = self.request.GET.get("next")
         if next_page == "dashboard":
             return f"{reverse('dashboard')}?tab=presentations"
-        
+
         return reverse("presentation_detail", kwargs={"pk": self.object.pk})
 
 

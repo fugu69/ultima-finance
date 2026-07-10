@@ -15,7 +15,14 @@
         
         <div class="mt-4 md:mt-0 bg-gray-50 border border-gray-200 rounded-xl px-5 py-3">
             <span class="text-xs font-medium text-gray-400 uppercase tracking-wider block">
-                {% if active_tab == 'presentations' %}Общая сумма групп{% else %}Общая сумма сделок{% endif %}
+                {% load i18n %}
+                {% language 'ru' %}
+                    {% if active_tab == 'presentations' %}
+                        Сумма презентаций за {% now "F" %}
+                    {% else %}
+                        Сумма продаж за {% now "F" %}
+                    {% endif %}
+                {% endlanguage %}
             </span>
             <span class="text-2xl font-bold text-gray-900">{{ total_amount|floatformat:2 }} {{ currency_symbol }}</span>
         </div>
@@ -113,15 +120,19 @@
                         <td class="px-6 py-4 text-gray-500">
                             {{ sale.created_at|date:"d E Y" }}
                         </td>
+                        
                         <td class="px-6 py-4 text-gray-600 max-w-xs truncate">
-                            {% if sale.comments.exists %}
+                            {% if sale.comments.all %}
                                 <span class="text-gray-700">
-                                    {{ sale.comments.last.comment }}
+                                    {% with sale.comments.all|slice:":-1" as last_slice %}
+                                        {{ last_slice.0.comment }}
+                                    {% endwith %}
                                 </span>
                             {% else %}
                                 <span class="text-gray-300">—</span>
                             {% endif %}
                         </td>
+                        
                         <td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">
                             <a href="{% url 'sale_update' sale.id %}?next=dashboard" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Update</a>
                             <a href="{% url 'sale_delete' sale.id %}?next=dashboard" class="text-red-600 hover:text-red-800 font-medium hover:underline">Delete</a>
@@ -141,7 +152,6 @@
 
     {% if is_paginated %}
     <div class="flex items-center justify-between border border-gray-200 bg-white px-4 py-4 sm:px-6 mt-4 rounded-xl shadow-sm">
-        
         <div class="flex flex-1 justify-between sm:hidden">
             {% if page_obj.has_previous %}
                 <a href="?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" 
@@ -178,7 +188,6 @@
             
             <div class="flex justify-center">
                 <nav class="isolate inline-flex -space-x-px rounded-xl shadow-sm bg-gray-100 p-1 border border-gray-200 items-center" aria-label="Pagination">
-                    
                     {% if page_obj.has_previous %}
                         <a href="?tab={{ active_tab }}&page=1" 
                            class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition" title="В самое начало">
