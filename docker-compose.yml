@@ -17,6 +17,8 @@ services:
 
   ultima_web:
     init: true
+    # Используем переменную окружения с дефолтным значением для локальной разработки
+    image: ${DOCKER_IMAGE:-ultima_web:local}
     build: .
     container_name: ultima_web
     restart: unless-stopped
