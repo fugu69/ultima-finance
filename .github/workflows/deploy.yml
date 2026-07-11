@@ -79,13 +79,17 @@ jobs:
             cd /home/dima/ultima-finance
             
             echo "--- Создание бэкапа базы данных ---"
-            docker compose exec -T ultima_backup /backup.sh
+            # ДОБАВЛЕНО: < /dev/null блокирует перехват stdin, позволяя выполнить команды ниже
+            docker compose exec -T ultima_backup /backup.sh < /dev/null
             
             echo "--- Обновление docker-compose.yml из репозитория ---"
             git pull origin main
             
             echo "--- Скачивание нового образа из GHCR ---"
             export DOCKER_IMAGE="ghcr.io/${{ needs.build-and-push.outputs.repo_lower }}/ultima_web:${{ github.sha }}"
+            
+            # ДОБАВЛЕНО: удаляем старую запись DOCKER_IMAGE (если была) и дописываем актуальную в .env
+            sed -i '/^DOCKER_IMAGE=/d' .env && echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> .env
             docker compose pull ultima_web
             
             echo "--- Перезапуск контейнеров (с новыми тегами) ---"
