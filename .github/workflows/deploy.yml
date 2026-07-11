@@ -79,7 +79,7 @@ jobs:
             cd /home/dima/ultima-finance
             
             echo "--- Создание бэкапа базы данных ---"
-            docker compose exec -T ultima_backup backup
+            docker compose exec -T ultima_backup backup.sh
             
             echo "--- Обновление docker-compose.yml из репозитория ---"
             git pull origin main
