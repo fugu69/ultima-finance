@@ -127,15 +127,13 @@
                         </td>
                         
                         <td class="px-6 py-4 text-gray-600 max-w-xs truncate">
-                            {% if sale.comments.all %}
-                                <span class="text-gray-700">
-                                    {% with sale.comments.all|slice:":-1" as last_slice %}
-                                        {{ last_slice.0.comment }}
-                                    {% endwith %}
-                                </span>
-                            {% else %}
-                                <span class="text-gray-300">—</span>
-                            {% endif %}
+                            {% with sale.comments.last as last_comment %}
+                                {% if last_comment %}
+                                    <span class="text-gray-700">{{ last_comment.comment }}</span>
+                                {% else %}
+                                    <span class="text-gray-300"></span>
+                                {% endif %}
+                            {% endwith %}
                         </td>
                         
                         <td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">
