@@ -1,267 +1,196 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="max-w-[1200px] mx-auto px-4 py-8">
-
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200 pb-6 mb-6">
-        <div>
-            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
-                Личный кабинет
-            </h1>
-            <p class="text-sm text-gray-500 mt-1">
-                Добро пожаловать, <span class="font-semibold text-gray-700">{{ request.user.username }}</span>
-            </p>
-        </div>
-        
-        <div class="mt-4 md:mt-0 bg-gray-50 border border-gray-200 rounded-xl px-5 py-3">
-            <span class="text-xs font-medium text-gray-400 uppercase tracking-wider block">
-                {% load i18n %}
-                {% language 'ru' %}
-                    {% if active_tab == 'presentations' %}
-                        Сумма презентаций за {% now "F" %}
-                    {% else %}
-                        Сумма продаж за {% now "F" %}
-                    {% endif %}
-                {% endlanguage %}
-            </span>
-            <span class="text-2xl font-bold text-gray-900">{{ total_amount|floatformat:2 }} {{ currency_symbol }}
-            </span>
-
-            <span class="text-sm text-gray-400 pb-1">
-            {{ bonus_percent }}% | {{ bonus_amount|floatformat:2 }} ฿
-            </span>
-        </div>
+{% extends "base.html" %} {% block content %}
+<div class="mx-auto max-w-[1200px] px-4 py-8">
+  <div class="mb-6 flex flex-col border-b border-gray-200 pb-6 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight text-gray-900">Личный кабинет</h1>
+      <p class="mt-1 text-sm text-gray-500">
+        Добро пожаловать,
+        <span class="font-semibold text-gray-700">{{ request.user.username }}</span>
+      </p>
     </div>
 
-    <div class="flex space-x-2 p-1 bg-gray-100 rounded-xl max-w-xs mx-auto mb-6">
-        <a href="?tab=sales" 
-           class="flex-1 text-center py-2 px-4 rounded-lg text-sm font-medium transition duration-150 {% if active_tab != 'presentations' %}bg-white text-gray-900 shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
-            Продажи
-        </a>
-        <a href="?tab=presentations" 
-           class="flex-1 text-center py-2 px-4 rounded-lg text-sm font-medium transition duration-150 {% if active_tab == 'presentations' %}bg-white text-gray-900 shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
-            Презентации
-        </a>
+    <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-5 py-3 md:mt-0">
+      <span class="block text-xs font-medium tracking-wider text-gray-400 uppercase">{% load i18n %} {% language 'ru' %} {% if active_tab == 'presentations' %} Сумма презентаций за {% now "F" %} {% else %} Сумма продаж за {% now "F" %} {% endif %} {% endlanguage %}</span>
+      <span class="text-2xl font-bold text-gray-900">{{ total_amount|floatformat:2 }} {{ currency_symbol }}</span>
+
+      <span class="pb-1 text-sm text-gray-400">{{ bonus_percent }}% | {{ bonus_amount|floatformat:2 }} ฿</span>
     </div>
+  </div>
 
-    <div class="mb-6">
-        {% if active_tab == 'presentations' %}
-            <a href="{% url 'presentation_create' %}" 
-               class="inline-flex items-center justify-center bg-gray-950 hover:bg-gray-800 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition duration-150 ease-in-out">
-                + Добавить презентацию
-            </a>
-        {% else %}
-            <a href="{% url 'sale_create' %}" 
-               class="inline-flex items-center justify-center bg-gray-950 hover:bg-gray-800 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition duration-150 ease-in-out">
-                + Добавить продажу
-            </a>
-        {% endif %}
-    </div>
+  <div class="mx-auto mb-6 flex max-w-xs space-x-2 rounded-xl bg-gray-100 p-1">
+    <a href="?tab=sales" class="{% if active_tab != 'presentations' %}bg-white shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %} flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium text-gray-900 transition duration-150">Продажи</a>
+    <a href="?tab=presentations" class="{% if active_tab == 'presentations' %}bg-white shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %} flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium text-gray-900 transition duration-150">Презентации</a>
+  </div>
 
-    <div class="overflow-x-auto bg-white border border-gray-200 rounded-xl shadow-sm">
-        {% if active_tab == 'presentations' %}
-            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead class="bg-gray-50 text-xs text-gray-500 uppercase font-medium">
-                    <tr>
-                        <th class="px-6 py-4">Сумма продаж группы</th>
-                        <th class="px-6 py-4">Идентификатор группы</th>
-                        <th class="px-6 py-4">Дата проведения</th>
-                        <th class="px-6 py-4 text-right">Действия</th>
-                    </tr>
-                </thead>
-                
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    {% for presentation in items %}
-                    <tr class="hover:bg-gray-50 transition duration-100">
-                        <td class="px-6 py-4 font-semibold text-gray-900">
-                            <a href="{{ presentation.get_absolute_url }}" class="hover:text-blue-600 hover:underline">
-                                {{ presentation.group_sales_total }} ฿
-                            </a>
-                        </td>
-                        <td class="px-6 py-4 text-gray-600 font-medium">
-                            {{ presentation.group_identifier|default:"Без идентификатора" }}
-                        </td>
-                        <td class="px-6 py-4 text-gray-500">
-                            {{ presentation.created_at|date:"d E Y" }}
-                        </td>
-                        <td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">
-                            <a href="{% url 'presentation_update' presentation.id %}?next=dashboard" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Update</a>
-                            <a href="{% url 'presentation_delete' presentation.id %}?next=dashboard" class="text-red-600 hover:text-red-800 font-medium hover:underline">Delete</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center py-12 text-gray-400 font-medium">
-                            У вас пока нет зарегистрированных презентаций.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-        {% else %}
-            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead class="bg-gray-50 text-xs text-gray-500 uppercase font-medium">
-                    <tr>
-                        <th class="px-6 py-4">Сумма</th>
-                        <th class="px-6 py-4">Тип оплаты</th>
-                        <th class="px-6 py-4">Дата</th>
-                        <th class="px-6 py-4">Последний комментарий</th>
-                        <th class="px-6 py-4 text-right">Действия</th>
-                    </tr>
-                </thead>
-                
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    {% for sale in items %}
-                    <tr class="hover:bg-gray-50 transition duration-100">
-                        <td class="px-6 py-4 font-semibold text-gray-900">
-                            <a href="{{ sale.get_absolute_url }}" class="hover:text-blue-600 hover:underline">
-                                {{ sale.sale_amount }} ฿
-                            </a>
-                        </td>
-                        <td class="px-6 py-4 text-gray-600">
-                            {{ sale.get_payment_type_display }}
-                        </td>
-                        <td class="px-6 py-4 text-gray-500">
-                            {{ sale.created_at|date:"d E Y" }}
-                        </td>
-                        
-                        <td class="px-6 py-4 text-gray-600 max-w-xs truncate">
-                            {% with sale.comments.last as last_comment %}
-                                {% if last_comment %}
-                                    <span class="text-gray-700">{{ last_comment.comment }}</span>
-                                {% else %}
-                                    <span class="text-gray-300"></span>
-                                {% endif %}
-                            {% endwith %}
-                        </td>
-                        
-                        <td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">
-                            <a href="{% url 'sale_update' sale.id %}?next=dashboard" class="text-blue-600 hover:text-blue-800 font-medium hover:underline">Update</a>
-                            <a href="{% url 'sale_delete' sale.id %}?next=dashboard" class="text-red-600 hover:text-red-800 font-medium hover:underline">Delete</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-12 text-gray-400 font-medium">
-                            У вас пока нет зарегистрированных продаж.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-    </div>
-
-    {% if is_paginated %}
-    <div class="flex items-center justify-between border border-gray-200 bg-white px-4 py-4 sm:px-6 mt-4 rounded-xl shadow-sm">
-        <div class="flex flex-1 justify-between sm:hidden">
-            {% if page_obj.has_previous %}
-                <a href="?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" 
-                   class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Назад
-                </a>
-            {% else %}
-                <span class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed">
-                    Назад
-                </span>
-            {% endif %}
-            
-            {% if page_obj.has_next %}
-                <a href="?tab={{ active_tab }}&page={{ page_obj.next_page_number }}" 
-                   class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Вперед
-                </a>
-            {% else %}
-                <span class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed">
-                    Вперед
-                </span>
-            {% endif %}
-        </div>
-
-        <div class="hidden sm:grid sm:grid-cols-3 sm:items-center w-full">
-            <div class="text-left">
-                <p class="text-sm text-gray-700">
-                    Показаны с <span class="font-semibold text-gray-900">{{ page_obj.start_index }}</span> 
-                    по <span class="font-semibold text-gray-900">{{ page_obj.end_index }}</span> 
-                    из <span class="font-semibold text-gray-900">{{ paginator.count }}</span>
-                    записей 
-                </p>
-            </div>
-            
-            <div class="flex justify-center">
-                <nav class="isolate inline-flex -space-x-px rounded-xl shadow-sm bg-gray-100 p-1 border border-gray-200 items-center" aria-label="Pagination">
-                    {% if page_obj.has_previous %}
-                        <a href="?tab={{ active_tab }}&page=1" 
-                           class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition" title="В самое начало">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm4.5 0a.75.75 0 0 1 0 1.06L12.56 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                        <a href="?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" 
-                           class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    {% else %}
-                        <span class="inline-flex items-center rounded-lg px-2 py-2 text-gray-300 cursor-not-allowed">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm4.5 0a.75.75 0 0 1 0 1.06L12.56 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
-                            </svg>
-                        </span>
-                        <span class="inline-flex items-center rounded-lg px-2 py-2 text-gray-300 cursor-not-allowed">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
-                            </svg>
-                        </span>
-                    {% endif %}
-
-                    {% for num in paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <span class="inline-flex items-center bg-white px-3.5 py-2 text-sm font-bold text-gray-900 rounded-lg shadow-sm border border-gray-200/50">
-                                {{ num }}
-                            </span>
-                        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
-                            <a href="?tab={{ active_tab }}&page={{ num }}" 
-                               class="inline-flex items-center px-3.5 py-2 text-sm font-medium text-gray-500 rounded-lg hover:bg-white hover:text-gray-900 transition">
-                                {{ num }}
-                            </a>
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if page_obj.has_next %}
-                        <a href="?tab={{ active_tab }}&page={{ page_obj.next_page_number }}" 
-                           class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                        <a href="?tab={{ active_tab }}&page={{ paginator.num_pages }}" 
-                           class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 hover:bg-white hover:text-gray-900 transition" title="В самый конец">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Zm-4.5 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L7.44 10 3.72 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    {% else %}
-                        <span class="inline-flex items-center rounded-lg px-2 py-2 text-gray-300 cursor-not-allowed">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
-                            </svg>
-                        </span>
-                        <span class="inline-flex items-center rounded-lg px-2 py-2 text-gray-300 cursor-not-allowed">
-                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Zm-4.5 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L7.44 10 3.72 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                            </svg>
-                        </span>
-                    {% endif %}
-                </nav>
-            </div>
-            
-            <div></div>
-        </div>
-    </div>
+  <div class="mb-6">
+    {% if active_tab == 'presentations' %}
+    <a href="{% url 'presentation_create' %}" class="inline-flex items-center justify-center rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-medium text-white transition duration-150 ease-in-out hover:bg-gray-800">+ Добавить презентацию</a>
+    {% else %}
+    <a href="{% url 'sale_create' %}" class="inline-flex items-center justify-center rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-medium text-white transition duration-150 ease-in-out hover:bg-gray-800">+ Добавить продажу</a>
     {% endif %}
+  </div>
 
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    {% if active_tab == 'presentations' %}
+    <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+      <thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
+        <tr>
+          <th class="px-6 py-4">Сумма продаж группы</th>
+          <th class="px-6 py-4">Идентификатор группы</th>
+          <th class="px-6 py-4">Дата проведения</th>
+          <th class="px-6 py-4 text-right">Действия</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-200 bg-white">
+        {% for presentation in items %}
+        <tr class="transition duration-100 hover:bg-gray-50">
+          <td class="px-6 py-4 font-semibold text-gray-900">
+            <a href="{{ presentation.get_absolute_url }}" class="hover:text-blue-600 hover:underline">{{ presentation.group_sales_total }} ฿</a>
+          </td>
+          <td class="px-6 py-4 font-medium text-gray-600">{{ presentation.group_identifier|default:"Без идентификатора" }}</td>
+          <td class="px-6 py-4 text-gray-500">{{ presentation.created_at|date:"d E Y" }}</td>
+          <td class="space-x-3 px-6 py-4 text-right whitespace-nowrap">
+            <a href="{% url 'presentation_update' presentation.id %}?next=dashboard" class="font-medium text-blue-600 hover:text-blue-800 hover:underline">Update</a>
+            <a href="{% url 'presentation_delete' presentation.id %}?next=dashboard" class="font-medium text-red-600 hover:text-red-800 hover:underline">Delete</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="py-12 text-center font-medium text-gray-400">У вас пока нет зарегистрированных презентаций.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% else %}
+    <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+      <thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
+        <tr>
+          <th class="px-6 py-4">Сумма</th>
+          <th class="px-6 py-4">Тип оплаты</th>
+          <th class="px-6 py-4">Дата</th>
+          <th class="px-6 py-4">Последний комментарий</th>
+          <th class="px-6 py-4 text-right">Действия</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-200 bg-white">
+        {% for sale in items %}
+        <tr class="transition duration-100 hover:bg-gray-50">
+          <td class="px-6 py-4 font-semibold text-gray-900">
+            <a href="{{ sale.get_absolute_url }}" class="hover:text-blue-600 hover:underline">{{ sale.sale_amount }} ฿</a>
+          </td>
+          <td class="px-6 py-4 text-gray-600">{{ sale.get_payment_type_display }}</td>
+          <td class="px-6 py-4 text-gray-500">{{ sale.created_at|date:"d E Y" }}</td>
+
+          <td class="max-w-xs truncate px-6 py-4 text-gray-600">
+            {% with sale.comments.last as last_comment %} {% if last_comment %}
+            <span class="text-gray-700">{{ last_comment.comment }}</span>
+            {% else %}
+            <span class="text-gray-300"></span>
+            {% endif %} {% endwith %}
+          </td>
+
+          <td class="space-x-3 px-6 py-4 text-right whitespace-nowrap">
+            <a href="{% url 'sale_update' sale.id %}?next=dashboard" class="font-medium text-blue-600 hover:text-blue-800 hover:underline">Update</a>
+            <a href="{% url 'sale_delete' sale.id %}?next=dashboard" class="font-medium text-red-600 hover:text-red-800 hover:underline">Delete</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="py-12 text-center font-medium text-gray-400">У вас пока нет зарегистрированных продаж.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+  {% if is_paginated %}
+  <div class="mt-4 flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-4 shadow-sm sm:px-6">
+    <div class="flex flex-1 justify-between sm:hidden">
+      {% if page_obj.has_previous %}
+      <a href="?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">Назад</a>
+      {% else %}
+      <span class="inline-flex cursor-not-allowed items-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-300">Назад</span>
+      {% endif %} {% if page_obj.has_next %}
+      <a href="?tab={{ active_tab }}&page={{ page_obj.next_page_number }}" class="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">Вперед</a>
+      {% else %}
+      <span class="inline-flex cursor-not-allowed items-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-300">Вперед</span>
+      {% endif %}
+    </div>
+
+    <div class="hidden w-full sm:grid sm:grid-cols-3 sm:items-center">
+      <div class="text-left">
+        <p class="text-sm text-gray-700">
+          Показаны с
+          <span class="font-semibold text-gray-900">{{ page_obj.start_index }}</span>
+          по
+          <span class="font-semibold text-gray-900">{{ page_obj.end_index }}</span>
+          из
+          <span class="font-semibold text-gray-900">{{ paginator.count }}</span>
+          записей
+        </p>
+      </div>
+
+      <div class="flex justify-center">
+        <nav class="isolate inline-flex items-center -space-x-px rounded-xl border border-gray-200 bg-gray-100 p-1 shadow-sm" aria-label="Pagination">
+          {% if page_obj.has_previous %}
+          <a href="?tab={{ active_tab }}&page=1" class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 transition hover:bg-white hover:text-gray-900" title="В самое начало">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm4.5 0a.75.75 0 0 1 0 1.06L12.56 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+            </svg>
+          </a>
+          <a href="?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 transition hover:bg-white hover:text-gray-900">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+            </svg>
+          </a>
+          {% else %}
+          <span class="inline-flex cursor-not-allowed items-center rounded-lg px-2 py-2 text-gray-300">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm4.5 0a.75.75 0 0 1 0 1.06L12.56 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+            </svg>
+          </span>
+          <span class="inline-flex cursor-not-allowed items-center rounded-lg px-2 py-2 text-gray-300">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+            </svg>
+          </span>
+          {% endif %} {% for num in paginator.page_range %} {% if page_obj.number == num %}
+          <span class="inline-flex items-center rounded-lg border border-gray-200/50 bg-white px-3.5 py-2 text-sm font-bold text-gray-900 shadow-sm">{{ num }}</span>
+          {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+          <a href="?tab={{ active_tab }}&page={{ num }}" class="inline-flex items-center rounded-lg px-3.5 py-2 text-sm font-medium text-gray-500 transition hover:bg-white hover:text-gray-900">{{ num }}</a>
+          {% endif %} {% endfor %} {% if page_obj.has_next %}
+          <a href="?tab={{ active_tab }}&page={{ page_obj.next_page_number }}" class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 transition hover:bg-white hover:text-gray-900">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+            </svg>
+          </a>
+          <a href="?tab={{ active_tab }}&page={{ paginator.num_pages }}" class="inline-flex items-center rounded-lg px-2 py-2 text-gray-500 transition hover:bg-white hover:text-gray-900" title="В самый конец">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Zm-4.5 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L7.44 10 3.72 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+            </svg>
+          </a>
+          {% else %}
+          <span class="inline-flex cursor-not-allowed items-center rounded-lg px-2 py-2 text-gray-300">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+            </svg>
+          </span>
+          <span class="inline-flex cursor-not-allowed items-center rounded-lg px-2 py-2 text-gray-300">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Zm-4.5 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L7.44 10 3.72 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+            </svg>
+          </span>
+          {% endif %}
+        </nav>
+      </div>
+
+      <div></div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock content %}
