@@ -15,8 +15,8 @@ from django.db.models import Sum
 from django.utils import timezone
 from django.urls import reverse, reverse_lazy
 
-from .models import Sale, Comment, Presentation
-from .forms import CommentForm
+from .models import Sale, Comment, Presentation, PresentationComment
+from .forms import CommentForm, PresentationCommentForm
 
 
 class LandingPageView(TemplateView):
@@ -41,7 +41,7 @@ class HomePageView(LoginRequiredMixin, ListView):
 
         if self.active_tab == "presentations":
             # Возвращаем презентации текущего пользователя
-            return Presentation.objects.filter(presenter=self.request.user)
+            return Presentation.objects.filter(presenter=self.request.user).prefetch_related("presentation_comments")
 
         # Возвращаем продажи + лениво подгружаем комменты, чтобы не плодить N+1 запросы
         return Sale.objects.filter(salesman=self.request.user).prefetch_related(
@@ -149,6 +149,17 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         # Вытаскиваем id продажи из урла и привязываем коммент к ней
         form.instance.sale_id = self.kwargs["sale_pk"]
         return super().form_valid(form)
+    
+class PresentationCommentCreateView(LoginRequiredMixin, CreateView):
+    model = PresentationComment
+    fields = ["comment"]
+
+    def form_valid(self, form):
+        # Привязываем залогиненного юзера к комменту
+        form.instance.author = self.request.user
+        # Вытаскиваем id продажи из урла и привязываем коммент к ней
+        form.instance.sale_id = self.kwargs["presentation_pk"]
+        return super().form_valid(form)
 
 
 class SaleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -163,7 +174,6 @@ class SaleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         next_page = self.request.GET.get("next")
 
-        # Актуализировано: прямой редирект на дашборд без захода на хоум
         if next_page == "dashboard":
             return reverse("dashboard")
 
@@ -211,6 +221,13 @@ class PresentationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView
         # Проверяем, что эту презентацию создал именно этот юзер
         obj = self.get_object()
         return obj.presenter == self.request.user
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = PresentationCommentForm()
+        return context
+    
+
 
 
 class PresentationUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
