@@ -51,11 +51,17 @@ class HomePageView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Передаем имя активного таба в шаблон, чтобы подсветить нужную кнопку
         context["active_tab"] = self.active_tab
 
-        # Считаем сумму за месяц отдельным точечным запросом в базу
-        context["total_amount"] = self._get_current_month_total()
+        total = self._get_current_month_total()
+
+        percent = self._get_bonus_percent(total, self.active_tab)
+
+        context["total_amount"] = total
+        context["bonus_percent"] = percent
+        context["bonus_amount"] = (
+            total * percent / Decimal("100")
+        ).quantize(Decimal("0.01"))
         context["currency_symbol"] = "฿"
 
         return context
@@ -76,7 +82,32 @@ class HomePageView(LoginRequiredMixin, ListView):
             created_at__date__range=[start_of_month, today]
         ).aggregate(total=Sum("sale_amount"))["total"] or Decimal("0.00")
 
+    @staticmethod
+    def _get_bonus_percent(total: Decimal, tab: str) -> Decimal:
+        if tab == "presentations":
+            if total < Decimal("1000000"):
+                return Decimal("2.50")
+            elif total < Decimal("1350000"):
+                return Decimal("2.75")
+            elif total < Decimal("1500000"):
+                return Decimal("3.15")
+            elif total < Decimal("2000000"):
+                return Decimal("3.35")
+            else:
+                return Decimal("3.50")
 
+        # Продажи
+        if total < Decimal("250000"):
+            return Decimal("1.85")
+        elif total < Decimal("600000"):
+            return Decimal("2.00")
+        elif total < Decimal("800000"):
+            return Decimal("2.35")
+        elif total <= Decimal("1000000"):
+            return Decimal("2.75")
+        else:
+            return Decimal("3.00")
+        
 # ==========================================
 # CRUD ДЛЯ ПРОДАЖ (SALES)
 # ==========================================

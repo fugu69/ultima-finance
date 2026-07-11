@@ -24,7 +24,12 @@
                     {% endif %}
                 {% endlanguage %}
             </span>
-            <span class="text-2xl font-bold text-gray-900">{{ total_amount|floatformat:2 }} {{ currency_symbol }}</span>
+            <span class="text-2xl font-bold text-gray-900">{{ total_amount|floatformat:2 }} {{ currency_symbol }}
+            </span>
+
+            <span class="text-sm text-gray-400 pb-1">
+            {{ bonus_percent }}% | {{ bonus_amount|floatformat:2 }} ฿
+            </span>
         </div>
     </div>
 
