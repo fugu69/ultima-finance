@@ -78,3 +78,25 @@ class Presentation(models.Model):
 
     def __str__(self) -> str:
         return f"Group identifier: {self.group_identifier}, sales total {self.group_sales_total}"
+
+
+class PresentationComment(models.Model):
+    presentation = models.ForeignKey(
+        Presentation, on_delete=models.CASCADE, related_name="presentation_comments"
+    )
+    comment = models.CharField(max_length=140)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="presentation_comments",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return self.comment
+
+    def get_absolute_url(self):
+        return reverse("presentation_detail", kwargs={"pk": self.presentation.pk})
