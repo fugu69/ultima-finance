@@ -8,6 +8,7 @@ from .views import (
     SaleUpdateView,
     SaleDeleteView,
     CommentCreateView,
+    PresentationCommentCreateView,
     # Добавляем вьюхи для презентаций
     PresentationCreateView,
     PresentationDetailView,
@@ -21,6 +22,11 @@ urlpatterns = [
         "sale/<int:sale_pk>/comment/",
         CommentCreateView.as_view(),
         name="comment_create",
+    ),
+    path(
+        "presentation/<int:presentation_pk>/comment/",
+        PresentationCommentCreateView.as_view(),
+        name="presentation_comment_create",
     ),
     path("sale/<int:pk>/update/", SaleUpdateView.as_view(), name="sale_update"),
     path("sale/<int:pk>/delete/", SaleDeleteView.as_view(), name="sale_delete"),
