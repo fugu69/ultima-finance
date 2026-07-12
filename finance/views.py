@@ -158,7 +158,7 @@ class PresentationCommentCreateView(LoginRequiredMixin, CreateView):
         # Привязываем залогиненного юзера к комменту
         form.instance.author = self.request.user
         # Вытаскиваем id продажи из урла и привязываем коммент к ней
-        form.instance.sale_id = self.kwargs["presentation_pk"]
+        form.instance.presentation_id = self.kwargs["presentation_pk"]
         return super().form_valid(form)
 
 
