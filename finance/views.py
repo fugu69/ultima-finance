@@ -39,6 +39,9 @@ class HomePageView(LoginRequiredMixin, ListView):
         # 1. Ловим текущий таб из URL (по дефолту — sales)
         self.active_tab = self.request.GET.get("tab", "sales")
 
+        if self.active_tab not in ("sales", "presentations"):
+            self.active_tab = "sales"
+
         if self.active_tab == "presentations":
             # Возвращаем презентации текущего пользователя
             return Presentation.objects.filter(presenter=self.request.user).prefetch_related("presentation_comments")
