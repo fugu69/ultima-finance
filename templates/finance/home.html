@@ -38,6 +38,7 @@
           <th class="px-6 py-4">Сумма продаж группы</th>
           <th class="px-6 py-4">Идентификатор группы</th>
           <th class="px-6 py-4">Дата проведения</th>
+          <th class="px-6 py-4">Последний комментарий</th>
           <th class="px-6 py-4 text-right">Действия</th>
         </tr>
       </thead>
@@ -50,6 +51,15 @@
           </td>
           <td class="px-6 py-4 font-medium text-gray-600">{{ presentation.group_identifier|default:"Без идентификатора" }}</td>
           <td class="px-6 py-4 text-gray-500">{{ presentation.created_at|date:"d E Y" }}</td>
+          <td class="max-w-xs truncate px-6 py-4 text-gray-600">
+            {% with presentation.presentation_comments.last as last_comment %} 
+              {% if last_comment %}
+                <span class="text-gray-700">{{ last_comment.comment }}</span>
+              {% else %}
+                <span class="text-gray-300">—</span>
+              {% endif %} 
+            {% endwith %}
+          </td>
           <td class="space-x-3 px-6 py-4 text-right whitespace-nowrap">
             <a href="{% url 'presentation_update' presentation.id %}?next=dashboard" class="font-medium text-blue-600 hover:text-blue-800 hover:underline">Update</a>
             <a href="{% url 'presentation_delete' presentation.id %}?next=dashboard" class="font-medium text-red-600 hover:text-red-800 hover:underline">Delete</a>
@@ -57,7 +67,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4" class="py-12 text-center font-medium text-gray-400">У вас пока нет зарегистрированных презентаций.</td>
+          <td colspan="5" class="py-12 text-center font-medium text-gray-400">У вас пока нет зарегистрированных презентаций.</td>
         </tr>
         {% endfor %}
       </tbody>
