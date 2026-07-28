@@ -14,8 +14,9 @@ from django.views.generic import (
 from django.db.models import Sum
 from django.utils import timezone
 from django.urls import reverse, reverse_lazy
+from django.db import transaction
 
-from .models import Sale, Comment, Presentation, PresentationComment
+from .models import Sale, Comment, Presentation, PresentationComment, OutboxEvent
 from .forms import CommentForm, PresentationCommentForm
 
 
@@ -120,12 +121,25 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
     model = Sale
     template_name = "finance/sale_create.html"
     fields = ["sale_amount", "payment_type"]
-    # Актуализировано: шлём сразу на дашборд, минуя лендинг
     success_url = reverse_lazy("dashboard")
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         form.instance.salesman = self.request.user
-        return super().form_valid(form)
+
+        with transaction.atomic():
+            response = super().form_valid(form)
+            sale = self.object
+
+            if sale.payment_type == Sale.PaymentChoices.TRANSFER:
+                payload = {
+                    "sale_id": sale.id,
+                    "amount": str(sale.sale_amount),
+                    "salesman_id": sale.salesman_id,
+                    "created_at": sale.created_at.isoformat()
+                }
+                OutboxEvent.objects.create(payload=payload)
+        
+        return response
 
 
 class SaleDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
