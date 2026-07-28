@@ -37,6 +37,24 @@ class Sale(models.Model):
 
     def __str__(self) -> str:
         return f"{self.sale_amount}, {self.payment_type}"
+    
+class OutboxEvent(models.Model):
+    class StatusChoices(models.TextChoices):
+        PENDING = "pending", "Pending"
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Failed"
+
+    payload = models.JSONField()
+    status = models.CharField(
+        max_length=10, 
+        choices=StatusChoices.choices, 
+        default=StatusChoices.PENDING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created_at"]
 
 
 class Comment(models.Model):
