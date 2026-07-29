@@ -216,3 +216,13 @@ IGNORABLE_404_URLS = [
 ]
 
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+
+# Расписание периодических задач
+CELERY_BEAT_SCHEDULE = {
+    "check-outbox-every-5-seconds": {
+        # ВАЖНО: здесь должно быть точное имя твоего приложения. 
+        # Судя по твоим шаблонам, оно называется finance.
+        "task": "finance.tasks.process_outbox_events", 
+        "schedule": 5.0, # Выполнять каждые 5 секунд
+    },
+}
