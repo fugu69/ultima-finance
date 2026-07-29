@@ -40,4 +40,6 @@ Thumbs.db
 *.swp
 *.swo
 
-# === Старые архивы () ===
+# === Celery ===
+celerybeat-schedule*
+celerybeat.pid
