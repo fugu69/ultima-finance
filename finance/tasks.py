@@ -2,8 +2,9 @@ import requests
 from celery import shared_task
 from .models import OutboxEvent
 
-# URL второго приложения (пока локальный)
-FASTAPI_WEBHOOK_URL = "http://127.0.0.1:8000/api/transfer/webhook"
+# 1. ДОБАВИЛИ СЛЭШ В КОНЕЦ URL
+FASTAPI_WEBHOOK_URL = "http://127.0.0.1:8000/api/transfer/webhook/"
+
 
 @shared_task
 def process_outbox_events():
@@ -11,20 +12,20 @@ def process_outbox_events():
 
     for event in events:
         try:
-            # Отправляем данные во второе приложение
-            response = requests.post(
-                FASTAPI_WEBHOOK_URL,
-                json=event.payload,
-                timeout=3
-            )
+            # 2. ДОБАВЛЯЕМ event_id НА ЛЕТУ ПЕРЕД ОТПРАВКОЙ (если ты этого еще не сделал)
+            data_to_send = event.payload.copy()
+            data_to_send["event_id"] = event.id
 
-            # Если FastAPI дал добро
+            response = requests.post(FASTAPI_WEBHOOK_URL, json=data_to_send, timeout=3)
+
             if response.status_code == 200:
                 event.status = OutboxEvent.StatusChoices.SENT
                 event.save(update_fields=["status", "updated_at"])
+            else:
+                # 3. ВЫВОДИМ ОШИБКУ В ТЕРМИНАЛ CELERY
+                print(
+                    f"❌ FastAPI не принял данные! Код: {response.status_code}, Ответ: {response.text}"
+                )
 
         except requests.RequestException:
-            # Если FastAPI выключен, нет сети или таймаут — мы попадаем сюда.
-            # Ничего не делаем (pass). Статус остается PENDING.
-            # При следующем запуске функция снова возьмет эту запись и попробует отправить.
             pass
