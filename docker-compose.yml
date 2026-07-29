@@ -15,15 +15,15 @@ services:
       timeout: 5s
       retries: 5
 
-    ultima-redis:
-      image: redis:7-alpine
-      container_name: ultima_redis
-      restart: unless-stopped
-      healthcheck:
-        test: ["CMD", "redis-cli", "ping"]
-        interval: 10s
-        timeout: 5s
-        retries: 3
+  ultima_redis:
+    image: redis:7-alpine
+    container_name: ultima_redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   ultima_web:
     init: true
