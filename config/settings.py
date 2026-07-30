@@ -221,14 +221,13 @@ CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 # Расписание периодических задач
 CELERY_BEAT_SCHEDULE = {
     "check-outbox-every-5-seconds": {
-        "task": "finance.tasks.process_outbox_events", 
-        "schedule": 5.0, # Выполнять каждые 5 секунд
+        "task": "finance.tasks.process_outbox_events",
+        "schedule": 5.0,  # Выполнять каждые 5 секунд
     },
     # Новый таск очистки (каждую ночь в 3:00)
-    'cleanup-old-outbox-events-daily': {
-        'task': 'finance.tasks.cleanup_processed_outbox_events',
-        'schedule': crontab(hour=3, minute=0),
-        'kwargs': {'days_to_keep': 30},
+    "cleanup-old-outbox-events-daily": {
+        "task": "finance.tasks.cleanup_processed_outbox_events",
+        "schedule": crontab(hour=3, minute=0),
+        "kwargs": {"days_to_keep": 30},
     },
 }
-

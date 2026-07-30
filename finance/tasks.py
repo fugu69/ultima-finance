@@ -4,7 +4,6 @@ from django.utils import timezone
 from celery import shared_task
 from .models import OutboxEvent
 
-
 # 1. ДОБАВИЛИ СЛЭШ В КОНЕЦ URL
 FASTAPI_WEBHOOK_URL = "http://127.0.0.1:8000/api/transfer/webhook/"
 
@@ -33,6 +32,7 @@ def process_outbox_events():
         except requests.RequestException:
             pass
 
+
 @shared_task
 def cleanup_processed_outbox_events(days_to_keep=30):
     """
@@ -42,8 +42,7 @@ def cleanup_processed_outbox_events(days_to_keep=30):
 
     # Фильтруем по полю status и значению StatusChoices.SENT
     deleted_count, _ = OutboxEvent.objects.filter(
-        status=OutboxEvent.StatusChoices.SENT,
-        created_at__lt=cutoff
+        status=OutboxEvent.StatusChoices.SENT, created_at__lt=cutoff
     ).delete()
 
     return f"Удалено {deleted_count} старых Outbox-записей."
