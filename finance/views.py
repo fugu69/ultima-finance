@@ -120,8 +120,26 @@ class HomePageView(LoginRequiredMixin, ListView):
 class SaleCreateView(LoginRequiredMixin, CreateView):
     model = Sale
     template_name = "finance/sale_create.html"
-    fields = ["sale_amount", "payment_type"]
+    # 1. Добавили новые поля в список
+    fields = ["sale_amount", "payment_type", "partner_name", "client_rate", "partner_rate"]
     success_url = reverse_lazy("dashboard")
+
+    # 2. ТА САМАЯ МАГИЯ «ЛИПКОЙ» ФОРМЫ
+    def get_initial(self):
+        initial = super().get_initial()
+        
+        last_transfer = Sale.objects.filter(
+            salesman=self.request.user, 
+            payment_type=Sale.PaymentChoices.TRANSFER
+        ).order_by('-created_at').first()
+
+        if last_transfer:
+            initial['partner_name'] = last_transfer.partner_name
+            initial['client_rate'] = last_transfer.client_rate
+            initial['partner_rate'] = last_transfer.partner_rate
+            initial['payment_type'] = Sale.PaymentChoices.TRANSFER
+
+        return initial
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         form.instance.salesman = self.request.user
@@ -131,10 +149,14 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
             sale = self.object
 
             if sale.payment_type == Sale.PaymentChoices.TRANSFER:
+                # 3. ДОБАВИЛИ НОВЫЕ ПОЛЯ В PAYLOAD (переводим Decimal в строку для JSON)
                 payload = {
                     "sale_id": sale.id,
                     "amount": str(sale.sale_amount),
                     "salesman_id": sale.salesman_id,
+                    "partner_name": sale.partner_name,
+                    "client_rate": str(sale.client_rate),
+                    "partner_rate": str(sale.partner_rate),
                     "created_at": sale.created_at.isoformat()
                 }
                 OutboxEvent.objects.create(payload=payload)
