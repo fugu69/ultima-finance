@@ -30,6 +30,46 @@
     {% endif %}
   </div>
 
+  {% if transfer_data and active_tab == 'sales' %}
+  <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-bold text-gray-950 mb-4">Балансы по переводам</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-3">
+              <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                  <span class="text-sm font-medium text-gray-600">Долг в кассу:</span>
+                  <span class="text-base font-bold text-gray-900">{{ transfer_data.cash_debt }} ฿</span>
+              </div>
+              <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                  <span class="text-sm font-medium text-gray-600">Личный профит:</span>
+                  <span class="text-base font-bold text-green-600">{{ transfer_data.profit_balance }} ฿</span>
+              </div>
+          </div>
+
+          <div>
+              <h3 class="text-sm font-semibold text-gray-700 mb-3">Долги обменников:</h3>
+              {% if transfer_data.partners %}
+                  <div class="space-y-2">
+                      {% for partner in transfer_data.partners %}
+                      <div class="flex justify-between items-center p-3 border border-gray-100 rounded-xl">
+                          <span class="text-sm font-medium text-gray-800">{{ partner.partner_name }}</span>
+                          <div class="flex items-center gap-4">
+                              <span class="text-base font-bold text-red-500">{{ partner.debt }} ฿</span>
+                              <button class="text-xs bg-gray-900 hover:bg-gray-800 text-white px-3 py-1.5 rounded-lg transition">
+                                  Сверка
+                              </button>
+                          </div>
+                      </div>
+                      {% endfor %}
+                  </div>
+              {% else %}
+                  <p class="text-sm text-gray-500 italic p-3">Нет активных долгов.</p>
+              {% endif %}
+          </div>
+      </div>
+  </div>
+  {% endif %}
+
   <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
     {% if active_tab == 'presentations' %}
     <table class="min-w-full divide-y divide-gray-200 text-left text-sm">

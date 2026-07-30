@@ -5,7 +5,8 @@ from celery import shared_task
 from .models import OutboxEvent
 
 # 1. ДОБАВИЛИ СЛЭШ В КОНЕЦ URL
-FASTAPI_WEBHOOK_URL = "http://127.0.0.1:8000/api/transfer/webhook/"
+# WARNING! Hardcode
+FASTAPI_WEBHOOK_URL = "http://172.20.12.194:8000/api/transfer/webhook/"
 
 
 @shared_task
@@ -29,8 +30,8 @@ def process_outbox_events():
                     f"❌ FastAPI не принял данные! Код: {response.status_code}, Ответ: {response.text}"
                 )
 
-        except requests.RequestException:
-            pass
+        except requests.RequestException as e:
+            print(f"❌ Ошибка сети при отправке в FastAPI: {e}")
 
 
 @shared_task

@@ -1,3 +1,4 @@
+import requests
 from decimal import Decimal
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -45,7 +46,9 @@ class HomePageView(LoginRequiredMixin, ListView):
 
         if self.active_tab == "presentations":
             # Возвращаем презентации текущего пользователя
-            return Presentation.objects.filter(presenter=self.request.user).prefetch_related("presentation_comments")
+            return Presentation.objects.filter(
+                presenter=self.request.user
+            ).prefetch_related("presentation_comments")
 
         # Возвращаем продажи + лениво подгружаем комменты, чтобы не плодить N+1 запросы
         return Sale.objects.filter(salesman=self.request.user).prefetch_related(
@@ -58,18 +61,29 @@ class HomePageView(LoginRequiredMixin, ListView):
         context["active_tab"] = self.active_tab
 
         total = self._get_current_month_total()
-
         percent = self._get_bonus_percent(total, self.active_tab)
 
         context["total_amount"] = total
         context["bonus_percent"] = percent
-        context["bonus_amount"] = (
-            total * percent / Decimal("100")
-        ).quantize(Decimal("0.01"))
+        context["bonus_amount"] = (total * percent / Decimal("100")).quantize(
+            Decimal("0.01")
+        )
         context["currency_symbol"] = "฿"
 
+        # WARNING! Hardcode
+        agent_id = self.request.user.id
+        fastapi_url = f"http://172.20.12.194:8000/api/transfer/balance/{agent_id}"
+
+        try:
+            response = requests.get(fastapi_url, timeout=2)
+            if response.status_code == 200:
+                context["transfer_data"] = response.json()
+            else:
+                context["transfer_data"] = None
+        except requests.RequestException:
+            context["transfer_data"] = None
+
         return context
-    
 
     def _get_current_month_total(self):
         today = timezone.now().date()
@@ -78,12 +92,11 @@ class HomePageView(LoginRequiredMixin, ListView):
         if self.active_tab == "presentations":
             return Presentation.objects.filter(
                 presenter=self.request.user,
-                created_at__date__range=[start_of_month, today]
+                created_at__date__range=[start_of_month, today],
             ).aggregate(total=Sum("group_sales_total"))["total"] or Decimal("0.00")
 
         return Sale.objects.filter(
-            salesman=self.request.user,
-            created_at__date__range=[start_of_month, today]
+            salesman=self.request.user, created_at__date__range=[start_of_month, today]
         ).aggregate(total=Sum("sale_amount"))["total"] or Decimal("0.00")
 
     @staticmethod
@@ -111,7 +124,8 @@ class HomePageView(LoginRequiredMixin, ListView):
             return Decimal("2.75")
         else:
             return Decimal("3.00")
-        
+
+
 # ==========================================
 # CRUD ДЛЯ ПРОДАЖ (SALES)
 # ==========================================
@@ -121,23 +135,32 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
     model = Sale
     template_name = "finance/sale_create.html"
     # 1. Добавили новые поля в список
-    fields = ["sale_amount", "payment_type", "partner_name", "client_rate", "partner_rate"]
+    fields = [
+        "sale_amount",
+        "payment_type",
+        "partner_name",
+        "client_rate",
+        "partner_rate",
+    ]
     success_url = reverse_lazy("dashboard")
 
     # 2. ТА САМАЯ МАГИЯ «ЛИПКОЙ» ФОРМЫ
     def get_initial(self):
         initial = super().get_initial()
-        
-        last_transfer = Sale.objects.filter(
-            salesman=self.request.user, 
-            payment_type=Sale.PaymentChoices.TRANSFER
-        ).order_by('-created_at').first()
+
+        last_transfer = (
+            Sale.objects.filter(
+                salesman=self.request.user, payment_type=Sale.PaymentChoices.TRANSFER
+            )
+            .order_by("-created_at")
+            .first()
+        )
 
         if last_transfer:
-            initial['partner_name'] = last_transfer.partner_name
-            initial['client_rate'] = last_transfer.client_rate
-            initial['partner_rate'] = last_transfer.partner_rate
-            initial['payment_type'] = Sale.PaymentChoices.TRANSFER
+            initial["partner_name"] = last_transfer.partner_name
+            initial["client_rate"] = last_transfer.client_rate
+            initial["partner_rate"] = last_transfer.partner_rate
+            initial["payment_type"] = Sale.PaymentChoices.TRANSFER
 
         return initial
 
@@ -157,10 +180,10 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
                     "partner_name": sale.partner_name,
                     "client_rate": str(sale.client_rate),
                     "partner_rate": str(sale.partner_rate),
-                    "created_at": sale.created_at.isoformat()
+                    "created_at": sale.created_at.isoformat(),
                 }
                 OutboxEvent.objects.create(payload=payload)
-        
+
         return response
 
 
@@ -188,7 +211,8 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         # Вытаскиваем id продажи из урла и привязываем коммент к ней
         form.instance.sale_id = self.kwargs["sale_pk"]
         return super().form_valid(form)
-    
+
+
 class PresentationCommentCreateView(LoginRequiredMixin, CreateView):
     model = PresentationComment
     fields = ["comment"]
@@ -260,13 +284,11 @@ class PresentationDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView
         # Проверяем, что эту презентацию создал именно этот юзер
         obj = self.get_object()
         return obj.presenter == self.request.user
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = PresentationCommentForm()
         return context
-    
-
 
 
 class PresentationUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
