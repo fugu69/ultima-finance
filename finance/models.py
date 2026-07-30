@@ -23,6 +23,10 @@ class Sale(models.Model):
         default=PaymentChoices.CASH_THAI_BAHT,
     )
 
+    partner_name = models.CharField(max_length=100, blank=True, null=True)
+    client_rate = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+    partner_rate = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     salesman = models.ForeignKey(
