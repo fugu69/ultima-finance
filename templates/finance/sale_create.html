@@ -37,4 +37,33 @@
     </div>
 
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Находим селект с типом оплаты
+        const paymentTypeSelect = document.getElementById("id_payment_type");
+        
+        // Находим сами поля (и их родительские контейнеры - div или p, чтобы скрыть поле вместе с лейблом)
+        const partnerNameField = document.getElementById("id_partner_name").parentNode;
+        const clientRateField = document.getElementById("id_client_rate").parentNode;
+        const partnerRateField = document.getElementById("id_partner_rate").parentNode;
+
+        const transferFields = [partnerNameField, clientRateField, partnerRateField];
+
+        // Функция переключения видимости
+        function toggleTransferFields() {
+            if (paymentTypeSelect.value === "TR") {
+                transferFields.forEach(field => field.style.display = "block");
+            } else {
+                transferFields.forEach(field => field.style.display = "none");
+            }
+        }
+
+        // Запускаем при загрузке страницы (чтобы сработало для нашей "липкой" формы)
+        if (paymentTypeSelect) {
+            toggleTransferFields();
+            // Вешаем слушатель на изменение селекта
+            paymentTypeSelect.addEventListener("change", toggleTransferFields);
+        }
+    });
+</script>
 {% endblock content %}
