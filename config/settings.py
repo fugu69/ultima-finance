@@ -7,7 +7,9 @@ from celery.schedules import crontab
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Initialize library
-env = environ.Env()
+env = environ.Env(
+    FASTAPI_BASE_URL=(str, 'http://127.0.0.1:8000')
+)
 
 # Read .env in root of the project
 environ.Env.read_env(BASE_DIR / ".env")
@@ -216,7 +218,7 @@ IGNORABLE_404_URLS = [
     re.compile(r"wp-admin"),
 ]
 
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_BROKER_URL = env('CELERY_BROKER_URL')
 
 # Расписание периодических задач
 CELERY_BEAT_SCHEDULE = {
@@ -231,3 +233,5 @@ CELERY_BEAT_SCHEDULE = {
         "kwargs": {"days_to_keep": 30},
     },
 }
+
+FASTAPI_BASE_URL = env('FASTAPI_BASE_URL')

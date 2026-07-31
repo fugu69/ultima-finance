@@ -1,13 +1,17 @@
+import os
 import requests
 from datetime import timedelta
 from django.utils import timezone
+from django.conf import settings
 from celery import shared_task
 from .models import OutboxEvent
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 1. ДОБАВИЛИ СЛЭШ В КОНЕЦ URL
 # WARNING! Hardcode
-FASTAPI_WEBHOOK_URL = "http://172.20.12.194:8000/api/transfer/webhook/"
-
+FASTAPI_WEBHOOK_URL = f"{settings.FASTAPI_BASE_URL}/api/transfer/webhook/"
 
 @shared_task
 def process_outbox_events():

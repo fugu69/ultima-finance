@@ -1,5 +1,6 @@
 import requests
 from decimal import Decimal
+from django.conf import settings
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.forms import BaseModelForm
@@ -70,9 +71,8 @@ class HomePageView(LoginRequiredMixin, ListView):
         )
         context["currency_symbol"] = "฿"
 
-        # WARNING! Hardcode
         agent_id = self.request.user.id
-        fastapi_url = f"http://172.20.12.194:8000/api/transfer/balance/{agent_id}"
+        fastapi_url = f"{settings.FASTAPI_BASE_URL}/api/transfer/balance/{agent_id}"
 
         try:
             response = requests.get(fastapi_url, timeout=2)

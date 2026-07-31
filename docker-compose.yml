@@ -123,3 +123,8 @@ services:
 volumes:
   postgres_data:
   static_volume:
+
+networks:
+  default:
+    name: ultima_default
+    external: true
