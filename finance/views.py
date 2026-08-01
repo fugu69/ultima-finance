@@ -1,4 +1,6 @@
 import requests
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 from django.conf import settings
 from django.shortcuts import redirect
@@ -13,6 +15,7 @@ from django.views.generic import (
     UpdateView,
     DeleteView,
 )
+from django.views.decorators.http import require_POST
 from django.db.models import Sum
 from django.utils import timezone
 from django.urls import reverse, reverse_lazy
@@ -320,3 +323,41 @@ class PresentationDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView
     # Актуализировано: исправлена f-строка, удаление возвращает на вкладку презентаций дашборда
     def get_success_url(self):
         return f"{reverse('dashboard')}?tab=presentations"
+
+
+@login_required
+@require_POST
+def reconcile_partner(request):
+    partner_name = request.POST.get('partner_name')
+    amount = request.POST.get('amount')
+    
+    if not partner_name or not amount:
+        messages.error(request, "Некорректные данные для сверки.")
+        return redirect('/dashboard/?tab=sales')
+
+    try:
+        amount_float = float(amount)
+    except ValueError:
+        messages.error(request, "Сумма должна быть числом.")
+        return redirect('/dashboard/?tab=sales')
+
+    payload = {
+        "agent_id": request.user.id,
+        "partner_name": partner_name,
+        "amount_received": amount_float
+    }
+
+    try:
+        # Дергаем наш новый эндпоинт в FastAPI
+        fastapi_url = f"{settings.FASTAPI_BASE_URL}/api/transfer/reconcile/"
+        response = requests.post(fastapi_url, json=payload, timeout=5)
+        
+        if response.status_code == 200:
+            messages.success(request, f"Сверка по {partner_name} успешно проведена.")
+        else:
+            messages.error(request, f"Ошибка API: {response.text}")
+    except requests.RequestException as e:
+        messages.error(request, f"Ошибка связи с сервером FastAPI: {e}")
+
+    # Возвращаемся на дашборд (на вкладку продаж)
+    return redirect('/dashboard/?tab=sales')

@@ -14,6 +14,7 @@ from .views import (
     PresentationDetailView,
     PresentationUpdateView,
     PresentationDeleteView,
+    reconcile_partner,
 )
 
 urlpatterns = [
@@ -32,6 +33,7 @@ urlpatterns = [
     path("sale/<int:pk>/delete/", SaleDeleteView.as_view(), name="sale_delete"),
     path("sale/<int:pk>/", SaleDetailView.as_view(), name="sale_detail"),
     path("sale/create/", SaleCreateView.as_view(), name="sale_create"),
+    path('reconcile/', reconcile_partner, name='reconcile_partner'),
     
     # Презентации (Presentations)
     path("presentation/<int:pk>/update/", PresentationUpdateView.as_view(), name="presentation_update"),
