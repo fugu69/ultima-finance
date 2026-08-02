@@ -32,7 +32,6 @@
 
   {% if transfer_data and active_tab == 'sales' %}
   <!-- Умный HTMX-контейнер -->
-  <!-- Умный HTMX-контейнер -->
   <div id="accordion-container"
        hx-get="{% url 'transfer_accordion' %}"
        hx-trigger="update-balances from:body"

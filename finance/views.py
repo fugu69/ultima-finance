@@ -23,6 +23,7 @@ from django.db import transaction
 
 from .models import Sale, Comment, Presentation, PresentationComment, OutboxEvent
 from .forms import CommentForm, PresentationCommentForm
+from .tasks import send_single_outbox_event
 
 
 class LandingPageView(TemplateView):
@@ -188,7 +189,12 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
                     "partner_rate": str(sale.partner_rate),
                     "created_at": sale.created_at.isoformat(),
                 }
-                OutboxEvent.objects.create(payload=payload)
+                event = OutboxEvent.objects.create(payload=payload)
+
+                # 🚀 ПИНАЕМ CELERY СРАЗУ ПОСЛЕ КОММИТА В БАЗУ!
+                transaction.on_commit(
+                    lambda: send_single_outbox_event.delay(event.id)
+                )
 
         return response
 
