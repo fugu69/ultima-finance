@@ -38,7 +38,7 @@
           <div class="flex items-center gap-3">
               <span>Балансы по переводам</span>
               {% if transfer_data.partners %}
-                  <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">Есть долги</span>
+                  <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">Активные балансы</span>
               {% endif %}
           </div>
           <!-- Крутящаяся стрелочка -->
@@ -51,16 +51,29 @@
 
       <!-- Содержимое аккордеона -->
       <div class="border-t border-gray-100 p-6">
-          <!-- Глобальные итоги (Показываются всегда) -->
+          <!-- Глобальные итоги (сетка на 3 колонки) -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              <div class="flex flex-col p-4 bg-gray-50 rounded-xl border border-gray-100">
+              
+              <div class="flex flex-col p-4 bg-gray-50 rounded-xl border border-gray-100 relative">
                   <span class="text-sm font-medium text-gray-600 mb-1">Общий долг в кассу:</span>
                   <span class="text-lg font-bold text-gray-900">{{ transfer_data.cash_debt }} ฿</span>
+                  
+                  <!-- Кнопка обнуления кассы -->
+                  {% if transfer_data.cash_debt > 0 %}
+                  <form method="POST" action="{% url 'clear_cash' %}" class="absolute top-4 right-4">
+                      {% csrf_token %}
+                      <button type="submit" onclick="return confirm('Подтверждаешь сдачу кассы боссу? Долг обнулится.')" class="text-[10px] uppercase tracking-wider font-bold bg-gray-900 text-white px-2 py-1 rounded hover:bg-gray-700 transition">
+                          Сдать кассу
+                      </button>
+                  </form>
+                  {% endif %}
               </div>
+              
               <div class="flex flex-col p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <span class="text-sm font-medium text-gray-600 mb-1">Доход за сегодня:</span>
                   <span class="text-lg font-bold text-green-600">+{{ transfer_data.daily_profit }} ฿</span>
               </div>
+              
               <div class="flex flex-col p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <span class="text-sm font-medium text-gray-600 mb-1">Доход за месяц:</span>
                   <span class="text-lg font-bold text-green-600">+{{ transfer_data.monthly_profit }} ฿</span>
@@ -76,31 +89,35 @@
                           <thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
                               <tr>
                                   <th class="px-4 py-3">Обменник</th>
-                                  <th class="px-4 py-3">Общий долг</th>
+                                  <th class="px-4 py-3">Твой профит (накоплен)</th>
+                                  <th class="px-4 py-3">Общий долг / Депозит</th>
                                   <th class="px-4 py-3 text-right">Действие</th>
                               </tr>
                           </thead>
-                          <tdody class="divide-y divide-gray-200 bg-white">
+                          <tbody class="divide-y divide-gray-200 bg-white">
                               {% for partner in transfer_data.partners %}
                               <tr class="hover:bg-gray-50 transition">
                                   <td class="px-4 py-3 font-medium text-gray-900">{{ partner.partner_name }}</td>
+                                  
+                                  <!-- Колонка навара -->
+                                  <td class="px-4 py-3 font-semibold text-green-600">{{ partner.partner_profit|default:"0.00" }} ฿</td>
+                                  
                                   <!-- Главный баланс -->
                                   <td class="px-4 py-3 font-bold text-base">
                                       {% if partner.debt < 0 %}
-                                          <span class="text-green-600 bg-green-50 px-2 py-1 rounded-md">Депозит: {{ partner.debt|stringformat:".2f"|cut:"-" }} ฿</span>
+                                          <span class="text-green-600 font-bold">Депозит: {{ partner.debt|stringformat:".2f"|cut:"-" }} ฿</span>
                                       {% else %}
-                                          <span class="text-red-600 bg-red-50 px-2 py-1 rounded-md">Долг обменника: {{ partner.debt }} ฿</span>
+                                          <span class="text-red-400">Долг: {{ partner.debt }} ฿</span>
                                       {% endif %}
                                   </td>
-
+                                  
                                   <td class="px-4 py-3 text-right whitespace-nowrap">
-                                      <button onclick="openReconcileModal('{{ partner.partner_name }}', '{{ partner.debt }}')" class="text-xs bg-gray-950 hover:bg-gray-800 text-white px-3 py-1.5 rounded-lg transition shadow-sm">
-                                          Сверка
+                                      <button onclick="openReconcileModal('{{ partner.partner_name }}', '{{ partner.debt }}')" class="text-xs bg-gray-950 hover:bg-gray-800 text-white px-3 py-1.5 rounded-lg transition shadow-sm">Сверка
                                       </button>
                                   </td>
                               </tr>
                               {% endfor %}
-                          </tdody>
+                          </tbody>
                       </table>
                   </div>
               {% else %}
@@ -110,21 +127,34 @@
       </div>
   </details>
 
-  <!-- Модальное окно (скрыто по умолчанию) -->
+  <!-- Модальное окно сверки (скрыто по умолчанию) -->
   <div id="reconcileModal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm overflow-y-auto h-full w-full flex items-center justify-center">
       <div class="relative mx-auto p-6 border w-96 shadow-xl rounded-2xl bg-white">
           <div class="mt-2">
               <h3 class="text-lg font-bold text-gray-900 mb-1" id="modalTitle">Сверка</h3>
-              <p class="text-sm text-gray-500 mb-4">Введите сумму, которую передал обменник. Профит спишется автоматически.</p>
+              <p class="text-sm text-gray-500 mb-4">Выберите тип операции и подтвердите сумму.</p>
               
-              <form method="POST" action="{% url 'reconcile_partner' %}">
+              <form method="POST" action="{% url 'reconcile_partner' %}" onsubmit="prepareReconcileSubmit(event)">
                   {% csrf_token %}
-                  <!-- Скрытое поле для передачи имени партнера -->
                   <input type="hidden" name="partner_name" id="modalPartnerName" value="">
+                  <input type="hidden" name="amount" id="finalAmount" value="">
                   
+                  <!-- Переключатель (Toggle) -->
+                  <div class="mb-4">
+                      <label class="block text-xs font-semibold text-gray-500 uppercase mb-2">Тип операции</label>
+                      <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl text-xs font-medium">
+                          <button type="button" id="btnModeReceive" onclick="setReconcileMode('receive')" class="py-2 rounded-lg bg-white shadow-sm text-gray-900 transition">
+                              [+] Приход
+                          </button>
+                          <button type="button" id="btnModeReturn" onclick="setReconcileMode('return')" class="py-2 rounded-lg text-gray-500 hover:text-gray-900 transition">
+                              [-] Возврат
+                          </button>
+                      </div>
+                  </div>
+
                   <div class="mb-5">
-                      <label class="block text-sm font-medium text-gray-700 mb-1">Полученная сумма (฿)</label>
-                      <input type="number" step="0.01" name="amount" id="modalAmount" required class="w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm py-2 px-3 border outline-none" placeholder="Например: 15000">
+                      <label class="block text-sm font-medium text-gray-700 mb-1" id="amountLabel">Сумма от обменника (฿)</label>
+                      <input type="number" step="0.01" id="modalAmountInput" required class="w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm py-2 px-3 border outline-none" placeholder="0.00">
                   </div>
                   
                   <div class="flex items-center justify-end gap-3">
@@ -140,23 +170,64 @@
       </div>
   </div>
 
-  <!-- Простой JS для управления модалкой -->
+  <!-- JS Логика переключателя -->
   <script>
-      function openReconcileModal(partnerName, currentDebt) {
+      let currentPartnerDebt = 0; // Сохраняем баланс текущего обменника
+      let currentMode = 'receive'; // 'receive' или 'return'
+
+      function openReconcileModal(partnerName, rawDebt) {
+          currentPartnerDebt = parseFloat(rawDebt) || 0;
           document.getElementById('reconcileModal').classList.remove('hidden');
           document.getElementById('modalPartnerName').value = partnerName;
-          
-          // Если долг меньше нуля (депозит), подставляем 0, чтобы не было отрицательных сумм в инпуте
-          let amountToFill = parseFloat(currentDebt) > 0 ? currentDebt : '';
-          document.getElementById('modalAmount').value = amountToFill; 
-          
           document.getElementById('modalTitle').innerText = 'Сверка: ' + partnerName;
-          document.body.style.overflow = 'hidden'; // Блокируем скролл страницы
+          document.body.style.overflow = 'hidden';
+
+          // Если у обменника депозит (debt < 0), по дефолту включаем режим возврата, иначе - прихода
+          if (currentPartnerDebt < 0) {
+              setReconcileMode('return');
+          } else {
+              setReconcileMode('receive');
+          }
+      }
+
+      function setReconcileMode(mode) {
+          currentMode = mode;
+          const btnReceive = document.getElementById('btnModeReceive');
+          const btnReturn = document.getElementById('btnModeReturn');
+          const input = document.getElementById('modalAmountInput');
+          const label = document.getElementById('amountLabel');
+
+          if (mode === 'receive') {
+              btnReceive.className = "py-2 rounded-lg bg-white shadow-sm text-gray-900 font-bold transition";
+              btnReturn.className = "py-2 rounded-lg text-gray-500 hover:text-gray-900 font-medium transition";
+              label.innerText = "Сумма от обменника (฿)";
+              
+              // Подтягиваем долг, если он положительный
+              input.value = currentPartnerDebt > 0 ? currentPartnerDebt.toFixed(2) : '';
+          } else {
+              btnReturn.className = "py-2 rounded-lg bg-white shadow-sm text-gray-900 font-bold transition";
+              btnReceive.className = "py-2 rounded-lg text-gray-500 hover:text-gray-900 font-medium transition";
+              label.innerText = "Сумма возврата депозита (฿)";
+              
+              // Подтягиваем депозит (числом без минуса)
+              input.value = currentPartnerDebt < 0 ? Math.abs(currentPartnerDebt).toFixed(2) : '';
+          }
+      }
+
+      function prepareReconcileSubmit(e) {
+          const rawVal = parseFloat(document.getElementById('modalAmountInput').value) || 0;
+          
+          // Если выбран режим возврата, отправляем число с минусом для FastAPI
+          if (currentMode === 'return') {
+              document.getElementById('finalAmount').value = -Math.abs(rawVal);
+          } else {
+              document.getElementById('finalAmount').value = Math.abs(rawVal);
+          }
       }
 
       function closeReconcileModal() {
           document.getElementById('reconcileModal').classList.add('hidden');
-          document.body.style.overflow = 'auto'; // Возвращаем скролл
+          document.body.style.overflow = 'auto';
       }
   </script>
   {% endif %}

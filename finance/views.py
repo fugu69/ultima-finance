@@ -348,7 +348,6 @@ def reconcile_partner(request):
     }
 
     try:
-        # Дергаем наш новый эндпоинт в FastAPI
         fastapi_url = f"{settings.FASTAPI_BASE_URL}/api/transfer/reconcile/"
         response = requests.post(fastapi_url, json=payload, timeout=5)
         
@@ -359,5 +358,23 @@ def reconcile_partner(request):
     except requests.RequestException as e:
         messages.error(request, f"Ошибка связи с сервером FastAPI: {e}")
 
-    # Возвращаемся на дашборд (на вкладку продаж)
+    return redirect('/dashboard/?tab=sales')
+
+
+# Вьюха для обработки нажатия кнопки "Сдать кассу"
+@login_required
+@require_POST
+def clear_cash_view(request):
+    agent_id = request.user.id
+    try:
+        fastapi_url = f"{settings.FASTAPI_BASE_URL}/api/transfer/clear_cash/{agent_id}"
+        response = requests.post(fastapi_url, timeout=5)
+        
+        if response.status_code == 200:
+            messages.success(request, "Касса успешно инкассирована. Долг обнулен.")
+        else:
+            messages.error(request, f"Ошибка обнуления: {response.text}")
+    except requests.RequestException as e:
+        messages.error(request, f"Ошибка связи с сервером: {e}")
+
     return redirect('/dashboard/?tab=sales')
