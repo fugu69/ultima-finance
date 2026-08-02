@@ -15,7 +15,8 @@ from .views import (
     PresentationUpdateView,
     PresentationDeleteView,
     reconcile_partner,
-    clear_cash_view
+    clear_cash_view,
+    transfer_accordion_view
 )
 
 urlpatterns = [
@@ -36,6 +37,7 @@ urlpatterns = [
     path("sale/create/", SaleCreateView.as_view(), name="sale_create"),
     path('reconcile/', reconcile_partner, name='reconcile_partner'),
     path('clear-cash/', clear_cash_view, name='clear_cash'),
+    path('transfer-accordion/', transfer_accordion_view, name='transfer_accordion'),
     
     # Презентации (Presentations)
     path("presentation/<int:pk>/update/", PresentationUpdateView.as_view(), name="presentation_update"),

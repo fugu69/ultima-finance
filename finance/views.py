@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 from django.conf import settings
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.forms import BaseModelForm
 from django.http import HttpResponse
@@ -145,7 +145,10 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
         "client_rate",
         "partner_rate",
     ]
-    success_url = reverse_lazy("dashboard")
+
+    def get_success_url(self):
+        # Метка created=1 скажет HTMX, что пора сделать отложенный опрос
+        return f"{reverse('dashboard')}?tab=sales&created=1"
 
     # 2. ТА САМАЯ МАГИЯ «ЛИПКОЙ» ФОРМЫ
     def get_initial(self):
@@ -378,3 +381,19 @@ def clear_cash_view(request):
         messages.error(request, f"Ошибка связи с сервером: {e}")
 
     return redirect('/dashboard/?tab=sales')
+
+# Новая вьюха специально для HTMX-запроса
+@login_required
+def transfer_accordion_view(request):
+    agent_id = request.user.id
+    fastapi_url = f"{settings.FASTAPI_BASE_URL}/api/transfer/balance/{agent_id}"
+    
+    try:
+        response = requests.get(fastapi_url, timeout=2)
+        transfer_data = response.json() if response.status_code == 200 else None
+    except requests.RequestException:
+        transfer_data = None
+
+    return render(request, "finance/includes/transfer_accordion.html", {
+        "transfer_data": transfer_data
+    })

@@ -31,101 +31,48 @@
   </div>
 
   {% if transfer_data and active_tab == 'sales' %}
-  <details class="group mb-6 rounded-2xl border border-gray-200 bg-white shadow-sm [&_summary::-webkit-details-marker]:hidden relative">
-      
-      <!-- Шапка аккордеона -->
-      <summary class="flex cursor-pointer items-center justify-between p-6 text-lg font-bold text-gray-950 transition hover:bg-gray-50 rounded-2xl">
-          <div class="flex items-center gap-3">
-              <span>Балансы по переводам</span>
-              {% if transfer_data.partners %}
-                  <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">Активные балансы</span>
-              {% endif %}
-          </div>
-          <!-- Крутящаяся стрелочка -->
-          <span class="transition duration-300 group-open:-rotate-180">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-          </span>
-      </summary>
+  <!-- Умный HTMX-контейнер -->
+  <!-- Умный HTMX-контейнер -->
+  <div id="accordion-container"
+       hx-get="{% url 'transfer_accordion' %}"
+       hx-trigger="update-balances from:body"
+       hx-swap="innerHTML">
+       
+      <!-- Первичный рендер при обычных переходах -->
+      {% include "finance/includes/transfer_accordion.html" %}
+  </div>
 
-      <!-- Содержимое аккордеона -->
-      <div class="border-t border-gray-100 p-6">
-          <!-- Глобальные итоги (сетка на 3 колонки) -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              
-              <div class="flex flex-col p-4 bg-gray-50 rounded-xl border border-gray-100 relative">
-                  <span class="text-sm font-medium text-gray-600 mb-1">Общий долг в кассу:</span>
-                  <span class="text-lg font-bold text-gray-900">{{ transfer_data.cash_debt }} ฿</span>
-                  
-                  <!-- Кнопка обнуления кассы -->
-                  {% if transfer_data.cash_debt > 0 %}
-                  <form method="POST" action="{% url 'clear_cash' %}" class="absolute top-4 right-4">
-                      {% csrf_token %}
-                      <button type="submit" onclick="return confirm('Подтверждаешь сдачу кассы боссу? Долг обнулится.')" class="text-[10px] uppercase tracking-wider font-bold bg-gray-900 text-white px-2 py-1 rounded hover:bg-gray-700 transition">
-                          Сдать кассу
-                      </button>
-                  </form>
-                  {% endif %}
-              </div>
-              
-              <div class="flex flex-col p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <span class="text-sm font-medium text-gray-600 mb-1">Доход за сегодня:</span>
-                  <span class="text-lg font-bold text-green-600">+{{ transfer_data.daily_profit }} ฿</span>
-              </div>
-              
-              <div class="flex flex-col p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <span class="text-sm font-medium text-gray-600 mb-1">Доход за месяц:</span>
-                  <span class="text-lg font-bold text-green-600">+{{ transfer_data.monthly_profit }} ฿</span>
-              </div>
-          </div>
+  {% if request.GET.created == '1' %}
+  <script>
+      let htmxAttempts = 0;
+      let isAccordionOpen = false;
 
-          <!-- Таблица обменников -->
-          <div>
-              <h3 class="text-sm font-semibold text-gray-700 mb-3">Детализация по обменникам:</h3>
-              {% if transfer_data.partners %}
-                  <div class="overflow-hidden border border-gray-200 rounded-xl">
-                      <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-                          <thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
-                              <tr>
-                                  <th class="px-4 py-3">Обменник</th>
-                                  <th class="px-4 py-3">Твой профит (накоплен)</th>
-                                  <th class="px-4 py-3">Общий долг / Депозит</th>
-                                  <th class="px-4 py-3 text-right">Действие</th>
-                              </tr>
-                          </thead>
-                          <tbody class="divide-y divide-gray-200 bg-white">
-                              {% for partner in transfer_data.partners %}
-                              <tr class="hover:bg-gray-50 transition">
-                                  <td class="px-4 py-3 font-medium text-gray-900">{{ partner.partner_name }}</td>
-                                  
-                                  <!-- Колонка навара -->
-                                  <td class="px-4 py-3 font-semibold text-green-600">{{ partner.partner_profit|default:"0.00" }} ฿</td>
-                                  
-                                  <!-- Главный баланс -->
-                                  <td class="px-4 py-3 font-bold text-base">
-                                      {% if partner.debt < 0 %}
-                                          <span class="text-green-600 font-bold">Депозит: {{ partner.debt|stringformat:".2f"|cut:"-" }} ฿</span>
-                                      {% else %}
-                                          <span class="text-red-400">Долг: {{ partner.debt }} ฿</span>
-                                      {% endif %}
-                                  </td>
-                                  
-                                  <td class="px-4 py-3 text-right whitespace-nowrap">
-                                      <button onclick="openReconcileModal('{{ partner.partner_name }}', '{{ partner.debt }}')" class="text-xs bg-gray-950 hover:bg-gray-800 text-white px-3 py-1.5 rounded-lg transition shadow-sm">Сверка
-                                      </button>
-                                  </td>
-                              </tr>
-                              {% endfor %}
-                          </tbody>
-                      </table>
-                  </div>
-              {% else %}
-                  <p class="text-sm text-gray-500 italic p-4 bg-gray-50 rounded-xl border border-gray-100">Нет активных долгов.</p>
-              {% endif %}
-          </div>
-      </div>
-  </details>
+      // Опрашиваем сервер 4 раза с интервалом в 2 сек
+      const balanceInterval = setInterval(() => {
+          // 1. Запоминаем текущее состояние аккордеона ПЕРЕД запросом
+          const details = document.querySelector('#accordion-container details');
+          isAccordionOpen = details ? details.open : false;
+
+          // 2. Даем команду HTMX обновить блок
+          document.body.dispatchEvent(new Event('update-balances'));
+          
+          htmxAttempts++;
+          if (htmxAttempts >= 4) {
+              clearInterval(balanceInterval);
+          }
+      }, 2000);
+
+      // 3. Как только HTMX вставил новый HTML — мгновенно возвращаем состояние ДО отрисовки браузером
+      document.body.addEventListener('htmx:afterSwap', (e) => {
+          if (e.target.id === 'accordion-container' && isAccordionOpen) {
+              const newDetails = document.querySelector('#accordion-container details');
+              if (newDetails) {
+                  newDetails.open = true; // Раскрываем обратно
+              }
+          }
+      });
+  </script>
+  {% endif %}
 
   <!-- Модальное окно сверки (скрыто по умолчанию) -->
   <div id="reconcileModal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm overflow-y-auto h-full w-full flex items-center justify-center">
