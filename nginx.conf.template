@@ -1,0 +1,26 @@
+server {
+    listen 80;
+
+    server_name ${DOMAINS} localhost;
+
+    client_max_body_size 50M;
+
+    location /static/ {
+        alias /app/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+    }
+
+    location / {
+        resolver 127.0.0.11 valid=30s;
+
+        set $upstream_target http://ultima_web:8000;
+        proxy_pass $upstream_target;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
