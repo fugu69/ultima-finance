@@ -28,7 +28,7 @@ services:
   ultima_web:
     init: true
     # Используем переменную окружения с дефолтным значением для локальной разработки
-    image: ${DOCKER_IMAGE:-ultima_web:local}
+    image: ${DOCKER_IMAGE:-ultima_web:latest}
     container_name: ultima_web
     restart: unless-stopped
     environment:
@@ -52,7 +52,7 @@ services:
       start_period: 10s
 
   ultima_celery_worker:
-    image: ${DOCKER_IMAGE:-ultima_web:local}
+    image: ${DOCKER_IMAGE:-ultima_web:latest}
     container_name: ultima_celery_worker
     restart: unless-stopped
     environment:
@@ -72,7 +72,7 @@ services:
         condition: service_healthy
 
   ultima_celery_beat:
-    image: ${DOCKER_IMAGE:-ultima_web:local}
+    image: ${DOCKER_IMAGE:-ultima_web:latest}
     container_name: ultima_celery_beat
     entrypoint: []
     command: celery -A config beat -l info
