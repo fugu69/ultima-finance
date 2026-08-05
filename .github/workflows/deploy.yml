@@ -93,7 +93,7 @@ jobs:
             docker compose pull ultima_web
             
             echo "--- Перезапуск контейнеров (с новыми тегами) ---"
-            docker compose up -d ultima_web ultima_nginx ultima_tunnel
+            docker compose up -d ultima_web ultima_nginx
             
             echo "--- Очистка старых образов для освобождения диска ---"
             docker image prune -f
