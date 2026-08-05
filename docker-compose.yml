@@ -135,5 +135,5 @@ volumes:
 
 networks:
   default:
-    name: ultima_default
+    name: ultima-finance_default
     external: true
