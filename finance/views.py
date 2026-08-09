@@ -142,8 +142,9 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
     fields = [
         "sale_amount",
         "payment_type",
-        "partner_name",
         "client_rate",
+        "transfer_amount_rub",
+        "partner_name",
         "partner_rate",
     ]
 
