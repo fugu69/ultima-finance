@@ -20,7 +20,7 @@ class Sale(models.Model):
 
     transfer_amount_rub = models.DecimalField(
         max_digits=14,
-        decimal_places=2,
+        decimal_places=0,
         default=Decimal("0.00"),
     )
     payment_type = models.CharField(
