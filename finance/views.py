@@ -184,6 +184,7 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
                 payload = {
                     "sale_id": sale.id,
                     "amount": str(sale.sale_amount),
+                    "transfer_amount_rub": str(sale.transfer_amount_rub),
                     "salesman_id": sale.salesman_id,
                     "partner_name": sale.partner_name,
                     "client_rate": str(sale.client_rate),
