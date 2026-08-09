@@ -103,7 +103,7 @@
 
             const transferAmount = saleAmount * clientRate;
 
-            transferAmountInput.value = transferAmount.toFixed(2);
+            transferAmountInput.value = Math.round(transferAmount);
         }
 
         if (paymentTypeSelect) {
