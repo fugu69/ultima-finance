@@ -18,7 +18,62 @@
             {% csrf_token %}
             
             <div class="space-y-4">
-                {{ form.as_p }}
+                <!-- Общая сумма продажи -->
+                <div>
+                    <label for="id_sale_amount">Сумма продажи (THB)</label>
+                    {{ form.sale_amount }}
+                    {% if form.sale_amount.errors %}<p class="text-xs text-red-500 mt-1">{{ form.sale_amount.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Способ оплаты -->
+                <div>
+                    <label for="id_payment_type">Способ оплаты</label>
+                    {{ form.payment_type }}
+                    {% if form.payment_type.errors %}<p class="text-xs text-red-500 mt-1">{{ form.payment_type.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- БЛОК ДЛЯ ТРАНСФЕРА / ПЕРЕВОДА -->
+                <div id="transfer_section" class="space-y-4 pt-2 border-t border-gray-100 hidden">
+                    
+                    <!-- Переключатель (Тоггл) Частичной оплаты -->
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="text-sm font-medium text-gray-700">Частичная оплата переводом</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle_partial_payment" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-950"></div>
+                        </label>
+                    </div>
+
+                    <!-- Окно для ввода суммы безналичной части в THB -->
+                    <div id="partial_amount_block" class="bg-amber-50/50 p-4 rounded-xl border border-amber-200/60 hidden">
+                        <label for="id_transfer_thb_amount" class="text-amber-900">Сумма к переводу (THB)</label>
+                        <input type="number" id="id_transfer_thb_amount" step="any" placeholder="Сколько бат переводит клиент" class="bg-white">
+                        <p class="text-xs text-amber-700 mt-1">Остаток суммы будет посчитан как наличные в кассу.</p>
+                    </div>
+
+                    <!-- Курсы и Расчет Рублей -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="id_client_rate">Курс клиента</label>
+                            {{ form.client_rate }}
+                        </div>
+                        <div>
+                            <label for="id_partner_rate">Курс партнера</label>
+                            {{ form.partner_rate }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="id_transfer_amount_rub">Сумма перевода (RUB)</label>
+                        {{ form.transfer_amount_rub }}
+                        <p class="text-xs text-gray-400 mt-1">Авторасчет. Можно отредактировать вручную при округлении.</p>
+                    </div>
+
+                    <div>
+                        <label for="id_partner_name">Партнер / Обменник</label>
+                        {{ form.partner_name }}
+                    </div>
+                </div>
             </div>
 
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
@@ -37,85 +92,83 @@
     </div>
 
 </div>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Находим селект с типом оплаты
-        const paymentTypeSelect = document.getElementById("id_payment_type");
-        
-        // Находим сами поля (и их родительские контейнеры - div или p, чтобы скрыть поле вместе с лейблом)
-        const partnerNameField = document.getElementById("id_partner_name").parentNode;
-        const clientRateField = document.getElementById("id_client_rate").parentNode;
-        const partnerRateField = document.getElementById("id_partner_rate").parentNode;
-
-        const transferFields = [partnerNameField, clientRateField, partnerRateField];
-
-        // Функция переключения видимости
-        function toggleTransferFields() {
-            if (paymentTypeSelect.value === "TR") {
-                transferFields.forEach(field => field.style.display = "block");
-            } else {
-                transferFields.forEach(field => field.style.display = "none");
-            }
-        }
-
-        // Запускаем при загрузке страницы (чтобы сработало для нашей "липкой" формы)
-        if (paymentTypeSelect) {
-            toggleTransferFields();
-            // Вешаем слушатель на изменение селекта
-            paymentTypeSelect.addEventListener("change", toggleTransferFields);
-        }
-    });
-
     document.addEventListener("DOMContentLoaded", function () {
         const paymentTypeSelect = document.getElementById("id_payment_type");
+        const togglePartial = document.getElementById("toggle_partial_payment");
 
         const saleAmountInput = document.getElementById("id_sale_amount");
+        const transferThbInput = document.getElementById("id_transfer_thb_amount");
         const clientRateInput = document.getElementById("id_client_rate");
-        const transferAmountInput = document.getElementById("id_transfer_amount_rub");
+        const transferRubInput = document.getElementById("id_transfer_amount_rub");
 
-        const partnerNameField = document.getElementById("id_partner_name").parentNode;
-        const clientRateField = document.getElementById("id_client_rate").parentNode;
-        const partnerRateField = document.getElementById("id_partner_rate").parentNode;
-        const transferAmountField = document.getElementById("id_transfer_amount_rub").parentNode;
+        const transferSection = document.getElementById("transfer_section");
+        const partialAmountBlock = document.getElementById("partial_amount_block");
 
-        const transferFields = [
-            partnerNameField,
-            clientRateField,
-            partnerRateField,
-            transferAmountField,
-        ];
-
-        function toggleTransferFields() {
+        // 1. Показ/скрытие блоков
+        function updateVisibility() {
             const isTransfer = paymentTypeSelect.value === "TR";
-
-            transferFields.forEach(field => {
-                field.style.display = isTransfer ? "block" : "none";
-            });
-
+            
+            // Скрываем/показываем весь блок перевода
             if (isTransfer) {
-                updateTransferAmount();
+                transferSection.classList.remove("hidden");
+            } else {
+                transferSection.classList.add("hidden");
             }
+
+            // Показываем окно частичной оплаты, если переключатель активен
+            if (isTransfer && togglePartial.checked) {
+                partialAmountBlock.classList.remove("hidden");
+            } else {
+                partialAmountBlock.classList.add("hidden");
+            }
+
+            recalculateRubles();
         }
 
-        function updateTransferAmount() {
-            const saleAmount = parseFloat(saleAmountInput.value) || 0;
+        // 2. Расчет рублей к переводу
+        function recalculateRubles() {
+            if (paymentTypeSelect.value !== "TR") return;
+
+            const totalSaleThb = parseFloat(saleAmountInput.value) || 0;
             const clientRate = parseFloat(clientRateInput.value) || 0;
 
-            const transferAmount = saleAmount * clientRate;
+            let thbToConvert = totalSaleThb;
+            if (togglePartial.checked) {
+                // Берем введенную сумму. Если пусто — будет 0.
+                thbToConvert = parseFloat(transferThbInput.value) || 0;
+            } else {
+                // Если тумблер выключен, скрытое поле дублирует общую сумму
+                transferThbInput.value = totalSaleThb || ""; 
+            }
 
-            transferAmountInput.value = Math.round(transferAmount);
+            const calculatedRubles = thbToConvert * clientRate;
+            // Если итоговая сумма больше 0, показываем ее. Иначе — оставляем поле пустым.
+            transferRubInput.value = calculatedRubles ? Math.round(calculatedRubles) : "";
         }
 
+        // Слушатели событий
         if (paymentTypeSelect) {
-            toggleTransferFields();
-
-            paymentTypeSelect.addEventListener("change", toggleTransferFields);
+            paymentTypeSelect.addEventListener("change", updateVisibility);
         }
 
-        if (saleAmountInput && clientRateInput && transferAmountInput) {
-            saleAmountInput.addEventListener("input", updateTransferAmount);
-            clientRateInput.addEventListener("input", updateTransferAmount);
+        if (togglePartial) {
+            togglePartial.addEventListener("change", function() {
+                // ИСПРАВЛЕНИЕ: Очищаем поле именно в момент включения тумблера
+                if (this.checked) {
+                    transferThbInput.value = "";
+                }
+                updateVisibility();
+            });
         }
+
+        if (saleAmountInput) saleAmountInput.addEventListener("input", recalculateRubles);
+        if (clientRateInput) clientRateInput.addEventListener("input", recalculateRubles);
+        if (transferThbInput) transferThbInput.addEventListener("input", recalculateRubles);
+
+        // Инициализация при загрузке
+        updateVisibility();
     });
 </script>
 {% endblock content %}
