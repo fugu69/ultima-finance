@@ -65,5 +65,57 @@
             paymentTypeSelect.addEventListener("change", toggleTransferFields);
         }
     });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const paymentTypeSelect = document.getElementById("id_payment_type");
+
+        const saleAmountInput = document.getElementById("id_sale_amount");
+        const clientRateInput = document.getElementById("id_client_rate");
+        const transferAmountInput = document.getElementById("id_transfer_amount_rub");
+
+        const partnerNameField = document.getElementById("id_partner_name").parentNode;
+        const clientRateField = document.getElementById("id_client_rate").parentNode;
+        const partnerRateField = document.getElementById("id_partner_rate").parentNode;
+        const transferAmountField = document.getElementById("id_transfer_amount_rub").parentNode;
+
+        const transferFields = [
+            partnerNameField,
+            clientRateField,
+            partnerRateField,
+            transferAmountField,
+        ];
+
+        function toggleTransferFields() {
+            const isTransfer = paymentTypeSelect.value === "TR";
+
+            transferFields.forEach(field => {
+                field.style.display = isTransfer ? "block" : "none";
+            });
+
+            if (isTransfer) {
+                updateTransferAmount();
+            }
+        }
+
+        function updateTransferAmount() {
+            const saleAmount = parseFloat(saleAmountInput.value) || 0;
+            const clientRate = parseFloat(clientRateInput.value) || 0;
+
+            const transferAmount = saleAmount * clientRate;
+
+            transferAmountInput.value = transferAmount.toFixed(2);
+        }
+
+        if (paymentTypeSelect) {
+            toggleTransferFields();
+
+            paymentTypeSelect.addEventListener("change", toggleTransferFields);
+        }
+
+        if (saleAmountInput && clientRateInput && transferAmountInput) {
+            saleAmountInput.addEventListener("input", updateTransferAmount);
+            clientRateInput.addEventListener("input", updateTransferAmount);
+        }
+    });
 </script>
 {% endblock content %}
