@@ -17,6 +17,12 @@ class Sale(models.Model):
     sale_amount = models.DecimalField(
         max_digits=14, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
     )
+
+    transfer_amount_rub = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=Decimal("0.00"),
+    )
     payment_type = models.CharField(
         max_length=4,
         choices=PaymentChoices.choices,
@@ -24,8 +30,12 @@ class Sale(models.Model):
     )
 
     partner_name = models.CharField(max_length=100, blank=True, null=True)
-    client_rate = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
-    partner_rate = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+    client_rate = models.DecimalField(
+        max_digits=10, decimal_places=4, blank=True, null=True
+    )
+    partner_rate = models.DecimalField(
+        max_digits=10, decimal_places=4, blank=True, null=True
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -41,7 +51,8 @@ class Sale(models.Model):
 
     def __str__(self) -> str:
         return f"{self.sale_amount}, {self.payment_type}"
-    
+
+
 class OutboxEvent(models.Model):
     class StatusChoices(models.TextChoices):
         PENDING = "pending", "Pending"
@@ -50,9 +61,7 @@ class OutboxEvent(models.Model):
 
     payload = models.JSONField()
     status = models.CharField(
-        max_length=10, 
-        choices=StatusChoices.choices, 
-        default=StatusChoices.PENDING
+        max_length=10, choices=StatusChoices.choices, default=StatusChoices.PENDING
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

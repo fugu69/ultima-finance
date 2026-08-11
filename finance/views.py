@@ -81,7 +81,19 @@ class HomePageView(LoginRequiredMixin, ListView):
         try:
             response = requests.get(fastapi_url, timeout=2)
             if response.status_code == 200:
-                context["transfer_data"] = response.json()
+                transfer_data = response.json()
+                
+                # 🛠 КОНВЕРТАЦИЯ СТРОК В ЧИСЛА ДЛЯ ШАБЛОНИЗАТОРА
+                transfer_data["cash_debt"] = float(transfer_data.get("cash_debt", 0))
+                transfer_data["daily_profit"] = float(transfer_data.get("daily_profit", 0))
+                transfer_data["monthly_profit"] = float(transfer_data.get("monthly_profit", 0))
+                
+                # Прогоняем партнеров на случай математики в HTML
+                for partner in transfer_data.get("partners", []):
+                    partner["debt"] = float(partner.get("debt", 0))
+                    partner["partner_profit"] = float(partner.get("partner_profit", 0))
+                    
+                context["transfer_data"] = transfer_data
             else:
                 context["transfer_data"] = None
         except requests.RequestException:
@@ -142,8 +154,9 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
     fields = [
         "sale_amount",
         "payment_type",
-        "partner_name",
         "client_rate",
+        "transfer_amount_rub",
+        "partner_name",
         "partner_rate",
     ]
 
@@ -183,6 +196,7 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
                 payload = {
                     "sale_id": sale.id,
                     "amount": str(sale.sale_amount),
+                    "transfer_amount_rub": str(sale.transfer_amount_rub),
                     "salesman_id": sale.salesman_id,
                     "partner_name": sale.partner_name,
                     "client_rate": str(sale.client_rate),
