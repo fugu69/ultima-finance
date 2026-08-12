@@ -416,6 +416,11 @@ def transfer_accordion_view(request):
     except requests.RequestException:
         transfer_data = None
 
-    return render(request, "finance/includes/transfer_accordion.html", {
+    response = render(request, "finance/includes/transfer_accordion.html", {
         "transfer_data": transfer_data
     })
+
+    if transfer_data is not None:
+        response.status_code = 286
+
+    return response
