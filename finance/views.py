@@ -187,12 +187,14 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         form.instance.salesman = self.request.user
 
+        if form.instance.payment_type != Sale.PaymentChoices.TRANSFER:
+            form.instance.transfer_amount_rub = Decimal("0")
+
         with transaction.atomic():
             response = super().form_valid(form)
             sale = self.object
 
             if sale.payment_type == Sale.PaymentChoices.TRANSFER:
-                # 3. ДОБАВИЛИ НОВЫЕ ПОЛЯ В PAYLOAD (переводим Decimal в строку для JSON)
                 payload = {
                     "sale_id": sale.id,
                     "amount": str(sale.sale_amount),
@@ -203,9 +205,9 @@ class SaleCreateView(LoginRequiredMixin, CreateView):
                     "partner_rate": str(sale.partner_rate),
                     "created_at": sale.created_at.isoformat(),
                 }
+
                 event = OutboxEvent.objects.create(payload=payload)
 
-                # 🚀 ПИНАЕМ CELERY СРАЗУ ПОСЛЕ КОММИТА В БАЗУ!
                 transaction.on_commit(
                     lambda: send_single_outbox_event.delay(event.id)
                 )
@@ -414,6 +416,11 @@ def transfer_accordion_view(request):
     except requests.RequestException:
         transfer_data = None
 
-    return render(request, "finance/includes/transfer_accordion.html", {
+    response = render(request, "finance/includes/transfer_accordion.html", {
         "transfer_data": transfer_data
     })
+
+    if transfer_data is not None:
+        response.status_code = 286
+
+    return response

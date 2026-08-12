@@ -30,48 +30,16 @@
     {% endif %}
   </div>
 
-  {% if transfer_data and active_tab == 'sales' %}
-  <!-- Умный HTMX-контейнер -->
+  {% if active_tab == 'sales' %}
+  <!-- HTMX-контейнер -->
   <div id="accordion-container"
        hx-get="{% url 'transfer_accordion' %}"
-       hx-trigger="update-balances from:body"
+       hx-trigger="every 1s"
        hx-swap="innerHTML">
        
       <!-- Первичный рендер при обычных переходах -->
       {% include "finance/includes/transfer_accordion.html" %}
   </div>
-
-  {% if request.GET.created == '1' %}
-  <script>
-      let htmxAttempts = 0;
-      let isAccordionOpen = false;
-
-      // Опрашиваем сервер 4 раза с интервалом в 2 сек
-      const balanceInterval = setInterval(() => {
-          // 1. Запоминаем текущее состояние аккордеона ПЕРЕД запросом
-          const details = document.querySelector('#accordion-container details');
-          isAccordionOpen = details ? details.open : false;
-
-          // 2. Даем команду HTMX обновить блок
-          document.body.dispatchEvent(new Event('update-balances'));
-          
-          htmxAttempts++;
-          if (htmxAttempts >= 4) {
-              clearInterval(balanceInterval);
-          }
-      }, 2000);
-
-      // 3. Как только HTMX вставил новый HTML — мгновенно возвращаем состояние ДО отрисовки браузером
-      document.body.addEventListener('htmx:afterSwap', (e) => {
-          if (e.target.id === 'accordion-container' && isAccordionOpen) {
-              const newDetails = document.querySelector('#accordion-container details');
-              if (newDetails) {
-                  newDetails.open = true; // Раскрываем обратно
-              }
-          }
-      });
-  </script>
-  {% endif %}
 
   <!-- Модальное окно сверки (скрыто по умолчанию) -->
   <div id="reconcileModal" class="fixed inset-0 z-50 hidden bg-gray-900/50 backdrop-blur-sm overflow-y-auto h-full w-full flex items-center justify-center">
