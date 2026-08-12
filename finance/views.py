@@ -413,6 +413,8 @@ def transfer_accordion_view(request):
     try:
         response = requests.get(fastapi_url, timeout=2)
         transfer_data = response.json() if response.status_code == 200 else None
+        if 'cash_debt' in transfer_data:
+                transfer_data['cash_debt'] = float(transfer_data['cash_debt'])
     except requests.RequestException:
         transfer_data = None
 
