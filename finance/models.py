@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_EVEN
 from django.urls import reverse
 
 
@@ -43,6 +43,22 @@ class Sale(models.Model):
     salesman = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sales"
     )
+
+    def save(self, *args, **kwargs):
+        # 1. Проверяем, что это первая запись (pk is None) и тип оплаты - Карта
+        if self.pk is None and self.payment_type == self.PaymentChoices.CARD:
+
+            # 2. Высчитываем  комиссию терминала 3%
+            raw_fee = self.sale_amount * Decimal("0.03")
+
+            # 3. Применяем банковское округление до двух знаков после запятой
+            fee = raw_fee.quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
+
+            # 4. Вычитаем комиссию
+            self.sale_amount -= fee
+
+        # 5. Передаем работу стандартному методу Django для сохранения в БД
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["-created_at"]
