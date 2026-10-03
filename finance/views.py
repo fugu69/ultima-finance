@@ -1,7 +1,7 @@
 import requests
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.conf import settings
 from django.shortcuts import redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -24,6 +24,29 @@ from django.db import transaction
 from .models import Sale, Comment, Presentation, PresentationComment, OutboxEvent
 from .forms import CommentForm, PresentationCommentForm
 from .tasks import send_single_outbox_event
+
+# HELPER FUNCTIONS
+
+# Безопасное приведение любого значения к Decimal.
+def to_decimal(val, default="0.00") -> Decimal:
+    try:
+        return Decimal(str(val))
+    except (TypeError, ValueError, InvalidOperation):
+        return Decimal(default)
+
+def format_transfer_data(data: dict | None) -> dict | None:
+    if not data:
+        return None
+
+    data["cash_debt"] = to_decimal(data.get("cash_debt"))
+    data["daily_profit"] = to_decimal(data.get("daily_profit"))
+    data["monthly_profit"] = to_decimal(data.get("monthly_profit"))
+
+    for partner in data.get("partners", []):
+        partner["debt"] = to_decimal(partner.get("debt"))
+        partner["partner_profit"] = to_decimal(partner.get("partner_profit"))
+
+    return data
 
 
 class LandingPageView(TemplateView):
@@ -409,12 +432,13 @@ def clear_cash_view(request):
 def transfer_accordion_view(request):
     agent_id = request.user.id
     fastapi_url = f"{settings.FASTAPI_BASE_URL}/api/transfer/balance/{agent_id}"
-    
+
     try:
         response = requests.get(fastapi_url, timeout=2)
-        transfer_data = response.json() if response.status_code == 200 else None
-        if 'cash_debt' in transfer_data:
-                transfer_data['cash_debt'] = float(transfer_data['cash_debt'])
+        if response.status_code == 200:
+            transfer_data = format_transfer_data(response.json())
+        else:
+            transfer_data = None
     except requests.RequestException:
         transfer_data = None
 
